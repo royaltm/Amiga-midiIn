@@ -1,0 +1,1137 @@
+@DATABASE midiIn.guide
+@AUTHOR "Sebastian Witkowski, Rafal Michalski"
+@(C) "Najakotiva Software 1997-98"
+@$VER: midiIn.guide 32.015b(24-Nov-98)
+@NODE MAIN "midiIn users guide"
+@HELP INTRO
+@NEXT INTRO
+@{b}
+                                                  ####
+__________##\\   /##___####___########\\___####_____####____##\\__###____________
+__________###\\_/###__________####_####____________####____###\\_###____________
+__________#########___####___####_####___####_____####____########____________
+__________#### ####___####___####_####___####_____####____########____________
+__________#### ####___####___####_####___####_____####____###_\\###____________
+          #### ####   ####   ########/   ####     ####    ###  \\## v32
+@{ub}
+                    @{fg highlight}(c) Copyright @{"Najakotiva" LINK NAJAK} Software 1997-98@{fg text}
+
+
+   @{"Introduction" LINK INTRO}
+   @{"Copyright" LINK LEGAL}
+   @{"Installation" LINK INSTALL}
+
+   @{"Startup parameters" LINK SETTINGS}
+   @{"How to work with midiIn" LINK HOWTO}
+   @{"midiIn Interface" LINK INTERFACE}
+   @{"Dealing with projects" LINK DEALING}
+   @{"Menus" LINK MENUS}
+   @{"Sample playback" LINK ADVANCED}
+   @{"Midi implementation" LINK MIDIIMP}
+   @{"Tips & Trix" LINK TIPS}
+
+   @{"Future versions" LINK FUTURE}
+
+   @{"Contact Us" LINK CONTACT}
+   @{"Najakotiva Software" LINK NAJAK} it is pronounced: [Nayakoteeva]
+
+@ENDNODE
+@NODE INTRO "The Idea behind midiIn"
+@PREV MAIN
+@NEXT LEGAL
+@{b}                             ############
+                             Introduction
+                             ############
+@{ub}
+@WORDWRAP
+   midiIn is a MIDI-controlled sample player for Amiga.
+   It can be used as a part of sound studio system.  Because of usage
+of midi.library it can be controlled from programs running on the same
+Amiga (using midi.library), as well as external sequencer, or
+keyboard.
+   This program has been tested in extreme situations (on stage,
+during Najakotiva performances and in studio during recording the
+Najakotiva album, not to mention many hours homeworks) and it has
+NEVER hang up nor acted strangely (of course ANYTHING can happen, so
+check it out by Yourself).
+
+
+Features:
+^^^^^^^^^
+ - loads 16-bit 8SVX, AIFF and WAV samples (mono and stereo)
+ - mixes up to 32 samples (on 060...)
+ - uses midi.library for easy cooperation with other MIDI programs
+   working on the same Amiga
+ - sample volume and panorama, also controlled in real time by MIDI
+ - standard ADSR envelope for each sample
+ - 60 banks for samples
+ - stores samples in Fast memory (samples can be as long as memory
+   permits)
+ - Pitch Bender (yes!)
+ - MIDI Monitor window displaying important MIDI Controllers
+   (Volume, Panorama, Pitch Bender) for every MIDI channel
+ - Scope window displaying played waveforms
+ - Velocity and Aftertouch implementation
+ - keyboard split to any number of ranges assigned to specific
+   samples
+ - very flexible, nice and user-friendly
+ - intuitive program with "live feeling" (the users say so!)
+ - heavily tested, stable, system-friendly
+
+
+  This is a pre-release version.  It is fully working and it is free!!
+  We want to give all Amiga musicians chance to use and check this
+program.  We want feedback - bug reports, ideas, etc.  Version with
+AHI support will be shareware.  But so far - use it as You want, copy
+it to Your friends, spread it all around the world,
+a-round-the-wo-orld!
+
+  One more thing:  if You use midiIn for making a good piece of music
+You should send me a tape or CD (or vinyl!!!). @{fg highlight}If You release Your
+music You might write inside the cover "Created on Amiga using
+midiIn". @{fg text}
+
+  Have fun and be creative!
+
+@ENDNODE
+@NODE LEGAL "Copyright"
+@PREV INTRO
+@NEXT INSTALL
+@WORDWRAP
+
+
+
+  "midiIn" @{"package" LINK INSTALL 11} is Copyright (c) 1997-98 @{"Najakotiva Software" LINK NAJAK}.
+  "midiIn" version 32.0+ is FreeWare. All rights are reserved.
+  It may change in future versions.
+
+  The program package is freely distributable as long as @{"all files" LINK INSTALL 11} listed in this
+  document are preserved.
+  It`s even desired to spread it, as long as the fees are not more than 5.-
+  DM or $3.-.
+
+   DISCLAIMER:
+
+THIS SOFTWARE AND INFORMATION IS PROVIDED "AS IS".  NO REPRESENTATIONS
+OR  WARRANTIES  ARE  MADE  WITH  RESPECT TO THE ACCURACY, RELIABILITY,
+PERFORMANCE,   CURRENTNESS,   OR   OPERATION   OF  THIS  SOFTWARE  AND
+INFORMATION,  AND  ALL  USE IS AT YOUR OWN RISK.  THE @{"AUTHORS" LINK CONTACT}
+ASSUME NO RESPONSIBILITY OR LIABILITY WHATSOEVER WITH RESPECT TO YOUR
+USE OF THIS SOFTWARE AND INFORMATION.
+
+
+  "E" language compiler is (c) 91-95 by Wouter van Oortmerssen.
+
+  The "midi.library" is Copyright (c) 1987, 1988, Pregnant Badger Music.
+
+  "Amiga" is (C) Copyright Amiga International
+
+@ENDNODE
+@NODE INSTALL "midiIn installation"
+@PREV LEGAL
+@NEXT SETTINGS
+@{b}                             ############
+                             Installation
+                             ############
+@{ub}
+@WORDWRAP
+
+Requirements:
+
+To work with midiIn version 32+ you need:
+  - an Amiga with MC68020 CPU or better
+  - an Amiga OS 2.1 or higher (3.0+ recommended)
+  - a bit of FAST memory
+@{b}
+* NOTE:  midiIn v32+ will not work on a bare A1200.  It must be
+equippet with at least external memory board.
+@{ub}
+How to install midiIn:
+
+  It is very simple, you probably have already done it.
+
+  You have to unpack the archive file (what you probably did).
+  midiIn32.lha archive should contain:
+
+    midiIn                  216200 - the main program (v32.015b)
+    midiIn.info               6057 - its icon
+    midiIn.guide             49905 - this documentation
+    midiIn.guide.info         2780 - guide's icon
+    projects/         <dir>        - an empty directory to store Your projects in
+    libs/reqtools.library    46148 - shared library
+    libs/midi.library         6372 - shared library
+
+ @{b}@{u}If you don't have those two libraries installed yet, copy them to your
+LIBS: directory.@{ub}@{uu}
+
+  What you should know:
+
+  No assigns nor environment variables are needed for midiIn.
+However if you want to launch midiIn from it's project icon you should
+make an ASSIGN "midiIn:" to midiIn main program's directory.
+The assign can be hidden (DEFER option).
+  The configuration file is saved in the same directory, the main
+program is in ('PROGDIR:midiIn.pref').
+Configuration file contains: sound and MIDI @{"settings" LINK MENUS 58},
+default "paths" to projects and samples, default "sample list" and
+layout information.  The program doesn't need this file to operate.
+@{b}
+* NOTE:   midiIn requires both: reqtools.library and midi.library to be in LIBS:
+  directory.@{ub}
+
+How to upgrade midiIn:
+
+  Configuration ('midiIn.pref') and project files from previous
+versions of midiIn (also pre v32) will be recognized by midiIn v32+.
+So if you want to upgrade just copy the contents of this archive to
+the directory where you have installed previous version of midiIn.
+You can then use and enhance all your existing projects using new
+version.
+@{b}
+* NOTE:  because there are lots of new features in midiIn v32+
+projects created with later version of midiIn can not be opened by
+older midiIn.@{ub}
+
+@ENDNODE
+@NODE SETTINGS "midiIn startup parameters"
+@PREV INSTALL
+@NEXT HOWTO
+@{b}                          ##################
+                          Startup parameters
+                          ##################
+@{ub}
+@WORDWRAP
+The midiIn program can be launch both from SHELL or Workbench.
+If you run it from SHELL you can use the following template:
+
+midiIn PROJECT, PUBSCREENNAME, FONTNAME, FONTSIZE/N, CX_POPKEY,
+       CX_PRIORITY/N
+
+where:
+   - PROJECT is the path and filename for midiIn project to load at
+     startup.  All preferences are then being loaded from this project.
+   - PUBSCREENNAME is the name of PUBLIC SCREEN to open midiIn windows
+     on.
+   - FONTNAME is the name of font that will be used with midiIn
+     windows.
+   - FONTSIZE is size (in pixels) of font described above (this
+     parameter must be used only with FONTNAME)
+   - CX_POPKEY defines hotkey combination for commodity's show
+     operation. (default: "ctrl shift m")
+   - CX_PRIORITY defines midiIn hotkey priority.
+
+examples:
+  midiIn projects/myproject
+  midiIn "" MIDIINPUB XHelvetica.font 11 "ctrl shift esc"
+  midiIn "" "" XHelvetica.font 13
+
+When you use Workbench, all above parameters can be add to midiIn main
+program's or project's icon TOOLTYPES.
+
+@ENDNODE
+@NODE HOWTO "How to work with midiIn"
+@PREV SETTINGS
+@NEXT INTERFACE
+@{b}                       ########################
+                       How to work with midiIn?
+                       ########################
+@{ub}
+@WORDWRAP
+
+   On the bottom of the midiIn window there are 60 small squares.
+They represent 60 independent banks.  Each bank may contain one sample
+and has it's own parameters.  To edit the specific bank's parameters
+You have to choose the bank either by clicking on it's small gadget,
+or with Amiga keyboard, using the < > cursor keys.  The "up" and
+"down" cursor keys jump 10 banks up - down.
+   The current bank is hilighted.  All non-empty banks change their
+color, too.
+   You can Copy, Paste and Delete (clear all data) banks using the
+corresponding entrys from the Edit menu or keyboard shortcuts
+(ramiga + c,v,x).
+
+The bank parameters are:
+
+ - Midi chan - the MIDI channel assigned to this bank.
+
+ - Bank priority - samples with higher priority mute samples with
+   lower priority.  If there are no free channels (see 
+   @{"sample playback" LINK ADVANCED 30}) and the NoteOn message comes, then the sample with
+   lowest priority is stopped.  However, if the new sample has the
+   lowest priority, it is not played.
+
+ - duration:
+   ON->OFF means that the sample is played as long as You keep the key
+   on Your MIDI keyboard pressed.  When the NoteOff message comes the
+   sample stops according to release time from the <envelope window>.
+   ON->ON means that to stop the sample You have to press the same key
+   again.  It's good especially for long, looped samples - You don't
+   have to keep the key pressed.
+   DRUM means that the sample is played from beginning to the end
+   no matter how long You keep the key pressed; note that it's
+   impossible to loop the DRUM sample
+
+ - Mono - if checked, this particular bank is monophonic - You
+   cannot play more than one sample at once; the new note mutes the
+   previous one; the muted sample is not cut in a moment - it's faded
+   according to it's envelope
+
+ - Loop - if the gadget is checked, the sample is looped.
+
+ - Mute group - allows to link banks in groups wich mute
+   themselves.  For example You may have an open and closed hihats.
+   You want the closed hihat to mute the open one.  You have to assign
+   both of them to the same mute group.  If bank has mute group = 0 it
+   is not muted by anything.  Again, samples are muted according to
+   their envelope.
+
+ - Base - the note being a base note of the sample.  You choose it
+   by pressing the SET gadget nearby and pressing the required key on
+   MIDI keyboard or pointing it with mouse.  The current base note
+   will flash during editing.  When editing the base note be careful
+   not to feed Amiga with random MIDI notes for example from
+   sequencer, because it all affects the base note!  If You play the
+   sample above its base note it will sound higher, below the base
+   note it will sound lower.  It's easy and natural.
+
+ - Fine tune - here You can tune Your samples. This parameter is
+   scaled in cents (1 cent = 1/100 of halftone).  So -100 means
+   halftone lower and 100 means halftone higher.  You can control Fine
+   tune from keyboard "+"increases, "-" decreases and "*" resets the
+   Fine tune.
+   Notice, that Fine tune works in realtime, as You move the slider
+   during sample playback.
+
+ - Every bank is assigned to a RANGE on the keyboard.  The range
+   may be the whole keyboard, few octaves or even one key.  The sample
+   will be played only in this range.  This allows to use many
+   different samples on one MIDI channel.  To edit range You have to
+   check the Edit range gadget below the keyboard.  The range assigned
+   to active bank will turn blue (or whatever colour You have assigned
+   in Your WB).
+
+   You can edit the range dragging its ends with mouse, or You can
+   use the MIDI keyboard - just press two limiting keys at once.
+   If there are any banks on the same MIDI channel, their range is
+   shown as a blue stripe in the upper part of the keyboard.  The
+   small gadgets representing these banks turns blue also.
+@{b}
+   If You move the base note of the bank when Edit mode is active,
+   the Range will move parallely with the base note. It is a fast
+   and easy way to transpose sample.
+@{ub}
+   When You finish editing the range, press the Edit range gadget
+   again to leave the edit mode.
+
+   When editing the range be careful not to feed Amiga with random
+   MIDI notes for example from sequencer, because it all affects the
+   range!
+
+
+The Instrument List
+
+   It is a list on the right part of midiIn window.  To assign a
+sample to a bank You have to load it to the list first.  Every sample
+from the list can be assigned to any number of free banks.
+   To load a sample to the list click on the Add gadget below the
+list.  A standard file-requester will appear.  Now select the samples
+You want to load (multi-select option is available with shift key).
+You can also select the project file - this will add all samples from
+chosen project to the List.
+   You can also add samples to List by dragging their icons onto the
+Instrument List (the same goes to dragging project icons onto the
+List).
+
+   midiIn recognises the 8SVX (also 16 bit), AIFF and WAV samples.
+Trying to load different sample formats will fail.
+@{b}
+* NOTE:  The samples are NOT loaded to memory now.  They are loaded
+when You assign them to specific banks.  Of course if You assign one
+sample to more than one bank, the sample is loaded to memory only
+once.
+@{ub}
+   To remove the sample from the list click on the Delete gadget below
+the Instrument list and then double-click on the samples You want to
+remove.  To leave the Delete mode click on the Delete gadget again.
+
+   To assign a sample to an empty bank just select the bank and click
+on the sample's name on the list.  The sample will be loaded to memory
+now.  If there's not enough free memory a requester will apprear.
+@{b}
+* NOTE:  Samples are stored in Fast memory.  This allows You to have
+them as many as Your Amiga permits.
+@{ub}
+   To remove the sample from the bank click on the Free gadget near
+the Instrument (sample) name field.
+   If You duble-click on sample in the Instrument List it will be
+loaded to active bank even if it is not empty.  It is the same as if
+You'd press the Free gadget and then choose the sample, but faster.
+Good for fast scan through the List.
+
+   To clear the Instrument List press the Clear gadget.  midiIn will
+ask then if You want to clear all samples, the unused samples (the
+ones that are not used in any bank), or You changed Your mind.
+
+
+   There are four important gadgets in the upper right corner of the
+midiIn window:
+
+ - Follow - if checked, midiIn will automatically activate played
+   bank; it is a good feature during editing banks - You don't usually
+   remember the number of bank, or sample name, You rather associate
+   the sound with key, or range that is assigned to it; now after
+   pressing Your key on MIDI keyboard and hearing Your sample You can
+   edit its parameters immidately, without scrolling through non-empty
+   banks and wondering which sample that was.  During playback from
+   sequencer, when many samples are played, it is good to turn Follow
+   mode off to avoid useless jumping from bank to bank and leave some
+   processor power for Scope ;)
+
+ - the Edit gadget enters/leaves the Edit mode, where You assign the
+   keyboard range to the bank.  It is described above.
+
+ - the Audio gadget allocates and frees the audio channels - You can
+   use it when You want to run another program using audio channels
+   and You don't want to quit midiIn; if audio channels are allocated
+   midiIn always asks You for confirmation before quitting - this
+   prevents You from unwanted quitting the program during performing
+   (on stage for example)
+
+ - the Midi control gadget turns on/off the external MIDI
+   keyboard/sequencer control of midiIn.
+   When the Midi control gadget is NOT checked You can play samples
+   with mouse clicking on the midiIn keyboard.  The range values are
+   not important.  You can play the active bank's sample on the whole
+   keyboard.  Pressing the Enter key plays the sample with the base
+   frequency.
+
+   These gadgets can be also controlled by Audio enable and Midi
+control entries from the Settings menu and with keyboard shortcuts
+(keys 'e', 'm', 'f' and 'a'+ right Amiga key).
+
+   If these two gadgets are active, You can perform.  midiIn waits for
+MIDI messages and plays samples as You assigned them.
+
+@ENDNODE
+@NODE INTERFACE "midiIn User Interface"
+@HELP INTRO
+@PREV HOWTO
+@NEXT DEALING
+@{b}                           ################
+                           midiIn Interface
+                           ################
+@{ub}
+@WORDWRAP
+
+   There are five midiIn windows:  Main window, details window,
+envelope window, scope window and monitor window.  All windows (except
+Main window) may be opened or closed.  Closing Main window quits
+midiIn.  You can toggle between Main, Details and Envelope with TAB
+key, or choose the window with right Amiga + 1,2,3,4,5 keys.  'Esc'
+key closes active window (except Main window, of course).
+   Position and size of all windows are saved with the @{"Save defaults" LINK MENUS 57}
+function if the @{"Save layout" LINK MENUS 64} flag in the @{"Settings" LINK MENUS 48} menu is checked.
+
+   There is an additional Advanced Settings window open by right Amiga
++ [p].
+
+
+Main window
+^^^^^^^^^^^
+
+   On the top of the midiIn main window there is a MIDI keyboard.  On
+this keyboard You can select ranges of banks, base notes and play
+samples with mouse if the Midi control is turned off Incoming NoteOn
+messages are displayed on this keyboard highlighting the corresponding
+keys.
+   In a box under the keyboard appears the note and MIDI number of
+selected key, incoming NoteOn message, or base note of selected bank.
+   To the right there are four @{"important gadgets" LINK HOWTO 140}:  Edit range (it
+turns on/off the range edit mode), Midi control (turns on/off MIDI
+control of midiIn), Audio (it allocates/frees audio channels) and
+Follow (turns on/off the Follow mode).
+   If MIDI control is turned off You can play samples with a mouse
+clicking on keyboard (sample range is not taken into consideration -
+You can play on the whole keyboard), or with Enter key - playing the
+base frequency.
+   Below there is the bank description section (the biggest part of
+window), and the Instrument List (on the right).
+   In the bank description section there is the Instrument (sample)
+name in a box and a big Free gadget.  This gadget removes sample from
+active bank (the sample still remains in the Instrument list and other
+parameters of bank are not changed, so You can easily exchange one
+sample with another from the list).  There are also slider gadgets for
+Midi channel, Bank priority, Fine tune and Mute Groups, gadgets for
+sample duration mode, Loop, Mono and Base key - all described in
+@{"How to work with midiIn" LINK HOWTO 17} chapter.
+   The @{"Instrument List" LINK HOWTO 95} is described in the same chapter.
+   The Reload gadget placed below the Free gadget reloads sample in
+active bank from disk.  If You want to edit the sample You use in
+external sample manipulation program, You can do it, and after saving
+Your changes back to disk You have to reload it using this gadget.
+There is also a Reload All entry in Project menu, which causes midiIn
+to reload all samples.
+
+
+Details window
+^^^^^^^^^^^^^^
+
+   At the top there are some important informations about sample
+loaded to active bank:  base frequency (read from the sample file),
+duration of sample played with its base frequency, and full path to
+sample file.
+
+   Below, You can change essential parameters of the sample.  These
+are:
+
+ - Offset - this allows You to select from which moment the sample
+   starts.  You can choose between 0 ms (from the beginning) and 3000
+   ms (from the 3rd second of sample).  If You select bigger offset
+   than sample duration (seen in the upper right corner of this
+   window) the sample isn't played.
+   Offset is scaled in miliseconds and may value from 0 ms to 3000 ms
+   ( = 3 s ).  This time values are correct only for base frequency of
+   the sample - they get shorter as You play the sample higher, and
+   longer as You play lower than the base frequency.
+   With Offset You can achieve various interesting and useful
+   effects:  cut the unwanted miliseconds of silence before drum hit,
+   fix the attack of a base drum by cutting first 3-4 miliseconds, or
+   even make drumloop start from snare - all without leaving midiIn
+   and using external sample processor.
+
+ - Volume (%) - sets the Volume of sample; note that it works in real
+   time - You can alter this parameter while playing and hear the
+   difference as You move mouse!  100 means normal volume, exactly the
+   same loudness as the original sample.  You can choose between 0 (no
+   sound at all) and 200 (200 % of original volume).
+   There are two gadgets near the slider:  "Max" gadget calculates
+   the maximum volume without distorting the sample (so it will be
+   more that 100 only for samples in which no data byte has maximum
+   value), "Nor" gadget sets volume to 100.
+@{b}
+* NOTE:  using standard Amiga audio with 14 bit output disables
+hardware volume control of sound.  Therefore samples are
+recalculated in realtime to achieve requested volume.  Lower volume
+means worse quality, because of bit resolution.
+@{ub}
+
+ - Velocity - how much velocity from NoteOn message affects sample
+   volume.  If set to 0 sample is always played with maximum (set in
+   Volume field) volume.  If set to 100 the volume depends on
+   velocity.  Maximum velocity means maximum possible volume, minimum
+   (0) velocity means no sound at all.
+
+ - Aftertouch - how much the Aftertouch message affects the sample
+   being played.  If set to 100 it lets You control dynamically volume
+   of played sound by pressing and depressing the key.  This is a VERY
+   COOL function, especially if You play some groovy loops and
+   experiment with Aftertouch - sounds like DJ tricks with mixer
+   faders.  Check it out by Yourself!
+
+ - Sub - This sets the implementation of Aftertouch feature. If this
+   option is disbled Aftertouch acts in its "normal" way - it only can
+   add loudnes to the existing sample loudness. 
+
+ - Panorama - nothing more, nothing less; -128 is maximum left, 0 is
+   center, 128 is maximum right; there is a 'Center' gadget under the
+   slider
+
+ - AutoPan - this spreads the sample in panorama.  If set to maximum,
+   sample played on the upper edge of range will be moved to right
+   channel, and sample played on the lower edge of the range - to the
+   left channel.  If set to 0, samples will be placed depending on
+   Panorama slider no matter where played on the keyboard.
+
+ - midi Volume - decides if the active bank's volume depends on MIDI
+   Volume Controller; if yes, then maximum MIDI volume (127) means
+   volume set by You in this window; volume = 0 means no sound
+
+ - midi Pan - decides if the actives bank's panorama depends on MIDI
+   Panorama Controller; if yes, then Pan in the middle means panorama
+   set by You in this window, maximum left means maximum left, maximum
+   right means maximum right; Panorama = 63 OR 64 means the middle.  0
+   is maximum left, 127 is maximum right
+   
+ - Pitch Bender note range - another COOL FEATURE - realtime pitch
+   shift controlled by MIDI joystick; set the amount of semitones to
+   transpose (maximum is 12, what means one octave).
+   Remember, that Pitch Bend is a channel message, so it affects all
+   samples on the channel You send it on.
+@{b}
+* NOTE:  Due to processor power limitations this function may mute
+sound sometimes during fast joystick movements.
+@{ub}
+
+Envelope window
+^^^^^^^^^^^^^^^
+
+   This is a standard ADSR (Attack, Decay, Sustain, Release) envelope,
+like the ones You can find in most synthesisers.  In case You don't
+know:  Attack means how fast after pressing the key volume reaches
+maximum.  Decay says how fast will the volume change from maximum
+(attack) level to Sustain level.  Volume stays on the Sustain level
+until the key is released.  Release is time from releasing the key
+(Note Off) to total lack of sound.
+
+   Attack, Decay and Release are measured in seconds (max 25.5 sec),
+Sustain is measured in percents (%).
+
+   Edition is very easy and intuitive.  You can change the parameters
+dragging the corresponding parts of the envelope with mouse.  Movement
+to the right increases the parameters (A, D and R), movement to the
+left decreases them.  You can set the Sustain level just by clicking
+on the desired level on the Sustain field (the big "X").
+  The alternative way of editing the envelope is to press and keep for
+a while LMB for decreasing or RMB for increasing specific field.
+
+Scope window
+^^^^^^^^^^^^
+
+   This is a nice scope.  It shows actual waveform played by both
+audio channels.  The Scope has the lowest priority in midiIn system,
+so it may freeze sometimes during heavy mixing.
+   If audio channels are not allocated, scope is empty.  If channels
+are allocated, two lines representing two channels appear.
+   Try to make the Scope window full screen!  (if You have enough CPU
+power...)
+
+
+Monitor window
+^^^^^^^^^^^^^^
+
+   In this window You can see the values of midi Volume and Panorama
+controllers and Pitch Bender message.  You can switch between these
+three possibilities using the 'ctrl' gadget.  Of course, the values
+are shown in real time.
+   The values are shown in 16 rows, for 16 midi channels.
+
+
+Advanced window
+^^^^^^^^^^^^^^^
+
+   You can open this window by choosing "Advanced..." from the
+Settings menu of the midiIn Main window, or by pressing right Amiga +
+[p] keys.
+   In this window You can set the mixing frequency, the number of
+virtual audio channels (max polyphony), Amiga audio filter, MIDI
+channels and messages received by midiIn and MIDI messages source.
+
+   Advanced window is divided into two parts - upper, smaller part
+controls audio output settings, the lower, bigger part controls MIDI
+input settings.  Each part has its own Undo gadget bringing back
+situation from last Save defaults function.  Usually, if You don't
+save settings it brings back situation from starting midiIn, even if
+You loaded settings with project.  In case You load a project with
+unwanted settings pressing these Undo buttons will bring back the
+previous situation.
+
+   More about mixing frequency and virtual channels can be found in
+the @{"Sample playback" LINK ADVANCED} chapter.
+
+   You can choose which MIDI messages and from which MIDI channels are
+received by midiIn by selecting the appropriate gadgets.
+   More about MIDI sources can be found in @{"MIDI implementation" LINK MIDIIMP}
+chapter.
+
+@ENDNODE
+@NODE DEALING "Dealing with midiIn projects"
+@HELP INTRO
+@PREV INTERFACE
+@NEXT MENUS
+@{b}                        #####################
+                        Dealing with projects
+                        #####################
+@{ub}
+@WORDWRAP
+
+   To begin a new project just double click on midiIn icon ;)
+   After loading the program is ready to work.  You may be surprised
+that Instrument List may contain some samples - don't worry,
+everything is OK, You must have saved settings with these samples in
+the List.  They are now default.  You can always clear the list and
+save settings again.
+   To clear the current project and start the new one choose the New
+entry from Project menu.  It will free all samples from memory and
+reset all banks' settings.  If the current project is unsaved (it
+should have an asterisk (*) by it's name on midiIn window's drag bar)
+midiIn will ask if You really want to loose it.
+   
+   Projects are saved by default in the PROGDIR:projects/ directory
+(PROGDIR:  in AmigaOS means the directory from which You start the
+program - in this case midiIn).  You can change this by saving a
+project in a different place and saving settings.  The new path will
+be saved then.
+
+   Projects do not contain the sound data (samples).  They just
+contain the sample path and filename, so they are quite short files.
+
+   To load a project from disk select Open.  A standard file requester
+will appear.
+   When You choose the project file, midiIn will load it and then try
+to load all samples assigned to banks.  The name and type of currently
+loaded sample is shown in a small window.  If the sample cannot be
+found, a requester appears asking if You want to replace this sample
+with another one (choose which one...), abort loading, or skip to the
+next sample.
+   You can also load a project by dragging it's icon to midiIn Main
+Window.
+@{b}
+* NOTE:  When changing the sample path in file requester window, the
+next sample will be loaded from the directory you have chosen.  So the
+best thing is to keep all samples assigned to one project in the same
+directory.  It is only important for people who often move files from
+one directory (or computer) to another.
+@{ub}
+  You can add an existing project to the current one.  For example You
+may have a nice drumset spread over the keyboard and saved as "drums"
+project.  Now while working on a project You want to use this drums.
+You have to choose as current bank an empty one and select AddProject
+from Project menu.  After selecting the desired project midiIn will
+load it to banks starting from the current one.  In case of
+overlapping the new banks with old ones, midiIn will ask if You want
+to overlap banks, skip used banks - fill only empty ones, or cancel
+loading.
+
+   To save a project to disk choose Save from the Project menu.  If
+Your project is new ("untitled"), a filerequester will appear asking
+You for project's path and filename.
+
+   Every project saved to disk contains all settings of midiIn:
+sample playback parameters, MIDI configuration, audio filter, and
+depending on the @{"Save layout" LINK MENUS 64} flag in the @{"Settings" LINK MENUS 48} menu, size and
+position of midiIn windows.
+   If the @{"Load with project" LINK MENUS 72} flag in the @{"Settings" LINK MENUS 48} menu is set, this
+settings are loaded with project.  Sometimes it is good to have
+different settings for different projects (for example audio filter),
+sometimes only the default settings are used.  You always have to
+remember about this flag to avoid problems.
+
+@ENDNODE
+@NODE MENUS "midiIn Menus"
+@HELP INTRO
+@PREV DEALING
+@NEXT ADVANCED
+@{b}                                #####
+                                Menus
+                                #####
+@{ub}
+@WORDWRAP
+
+   This is a description of midiIn Main window's menu.  Sample detail
+window and Envelope window have the same menu except the Settings
+entry.  Scope window and Advanced settings window have no menu at all.
+
+
+   Project
+   ^^^^^^^
+    -- New @{"Prepares a new projects" LINK DEALING 11}
+    -- Open - @{"loads" LINK DEALING 26} a project from disk
+    -- AddProject - @{"inserts" LINK DEALING 43} an existing project starting from the
+                    active bank; useful for adding made-before drums
+                    sets etc.
+    -- ReloadAll - @{"reloads" LINK INTERFACE 48} all samples used in banks.  You should
+                  reaload samples if You edited them in external
+                  sample editor not quitting midiIn.
+    -- Save - @{"saves" LINK DEALING 53} the project with the current name
+              there is the project name displayed on the midiIn
+              window's drag bar; if it is followed by an asterisk (*)
+              it means that the project is changed and You have to
+              save it to store the changes
+    -- Save as - saves the project opening a file-requester allowing
+                 You to change the path and the name of the project
+    -- Info - displays information about number of loaded samples,
+              memory allocated by them, free memory available and how
+              long You are working with midiIn
+    -- Hide - closes all midiIn windows except the Scope and Monitor
+              windows without stopping to play; to restore the windows
+              You have to press the combination of keys defined in
+              midiIn's @{"parameter" LINK SETTINGS} CX_POPKEY.  Default combination
+              is "control shift m".  midiIn is a system commodity, so
+              You can also use the Exchange program and its "Show
+              interface" function.
+    -- About - opens the intro window with picture and introtext
+    -- Quit - quits midiIn; if the project is unsaved midiIn asks You
+              for confirmation
+
+   Edit
+   ^^^^ 
+    -- Copy - copies the current bank to buffer
+    -- Paste - pastes buffer to current bank
+    -- Delete - clears all data in current bank
+         see @{"How to work with midiIn" LINK HOWTO 5} for details
+
+   Settings
+   ^^^^^^^^
+    -- Audio enable - allocates and frees audio.device
+    -- Midi control - allows/permits MIDI control of midiIn
+                      see @{"How to work with midiIn" LINK HOWTO 164} for details
+    -- Follow mode - turns on/off Follow mode, which changes the
+                     current bank to the one played recently
+    -- Advanced - opens an @{"advanced window" LINK INTERFACE 188} in which You can
+                  change the midi.library and sound player parameters
+    -- Save defaults - saves @{"advanced settings" LINK INTERFACE 188}, @{"default paths" LINK DEALING 17}
+                      to projects and samples, default @{"Instrument List" LINK HOWTO 95},
+                      and depending on the "Save layout" flag,
+                      size and position of all midiIn windows in
+                      'PROGDIR:midiIn.pref' file, which is loaded
+                      after starting midiIn.
+
+      -- Save layout - this flag tells midiIn if size and position
+                       of windows should be saved together with
+                       settings.  It should be turned off to avoid
+                       saving random moves of windows with every
+                       project.  You should turn it on to set the
+                       preferred layout and save it with "Save
+                       default" function.
+
+      -- Load with project - if turned on, midiIn will load settings
+                       saved with every project on disk.
+
+      -- Save icons - if checked, saves icon with every project; the
+                      icon is "def_midiIn_project.info" which should
+                      be in the "project",  "ENV:Sys", or "PROGDIR:Icons"
+                      directory; if there's no such icon it uses the
+                      system default project icon. The DEFAULTTOOL of
+                      that icon is set to "midiIn:midiIn", so if you
+                      want to launch "midiIn" from project's icon you 
+                      need the assign "midiIn:" to midiIn's directory.
+                      See @{"Installation" LINK INSTALL} chapter.
+@{b}
+* NOTE:  There's no "def_midiIn_project" icon so far.  You can design
+one.  It has to be both MagicWB and NewIcons compatible and a pretty
+one, of course.  We're waiting!!!
+@{ub}
+
+   Windows
+   ^^^^^^^
+    -- Main - activates the midiIn @{"main window" LINK INTERFACE 18}
+    -- Details - activates, and opens if necessary the @{"Details window" LINK INTERFACE 55}
+    -- Envelope - activates, and opens if necessary the
+       @{"Envelope window" LINK INTERFACE 144}
+    -- Scope - activates, and opens if necessary the @{"Scope window" LINK INTERFACE 166}
+    -- Monitor - activates, and opens if necessary the
+       @{"Monitor window" LINK INTERFACE 178}
+
+@ENDNODE
+@NODE ADVANCED "midiIn sample playback"
+@HELP INTRO
+@PREV MENUS
+@NEXT MIDIIMP
+@{b}                           ###############
+                           Sample playback
+                           ###############
+@{ub}
+@WORDWRAP
+
+   This version of midiIn doesn't support AHI.
+   midiIn uses standard Amiga audio hardware with 14 bit sample
+resolution.  We tried to make the audio routines as good as possible.
+Mixing is made with 32 bit resolutions, overloads do not cause random
+values of signal (too high values are set to maximum values) - it
+means that in case of too many samples played too loud You won't hear
+ticks and crackles, but a usual distortion.
+
+   The mixing frequency is set in the @{"advanced window" LINK INTERFACE 188}.
+   You can choose between 14 kHz, 20 kHz, 28 kHz, 41 kHz and 48 kHz.
+@{b}
+* NOTE:  that due to Amiga hardware limitations frequencies above 28 kHz
+are available only when using higher video modes (Double or VGA
+modes).
+@{ub}
+   Mixing frequency has influence on frequency range of played sound.
+Maximum played frequency cannot be higher than half of the sampling
+frequency.  For example when You choose 28 kHz, maximum frequency
+Amiga can play is 14 kHz.  For professional use (as far as Amiga audio
+hardware can be called professional...) You should use 48 kHz to get
+full audible frequency range (more than up to 20 kHz).
+   The higher frequency, the more processor power is used, what means
+that on the same computer You can get more/less virtual channels
+depending on the mixing frequency.
+
+   VIRTUAL CHANNELS
+   midiIn uses its own procedures to mix sound.  The number of samples
+mixed depends on the speed of the processor.  On A1200 with MTec 1230
+running at 42 MHz, 12 samples can be mixed with no problems.  On A1200
+with Blizzard 1260 @ 50 MHz 32 channels can be mixed and there is
+still lots of power for other tasks...  We have not checked other
+machines (please report!).
+   To avoid problems You should set the number of virtual audio
+channels (the number of samples played and mixed at one time) in
+midiIn @{"advanced window" LINK INTERFACE 188} correctly.  The best way is to set it to
+maximum (32) first and play as many looped samples as possible.  When
+midiIn can't mix any more it cuts off the sound.  You have to count
+how many samples Your machine is able to mix and set the Chan poly
+value correctly.
+   Note that stereo samples take more processor power than mono
+samples (although not twice as much).  Be sure not to set the Chan
+poly too high to avoid cutting off the sound during playback!
+
+   If You try to play more samples than You have channels
+(@{"Max polyphony" LINK INTERFACE 188}), samples with lowest priority (see @{"How to work..." LINK HOWTO 21})
+are muted.
+
+@ENDNODE
+@NODE MIDIIMP "MIDI implementation"
+@HELP INTRO
+@PREV ADVANCED
+@NEXT TIPS
+@{b}                         ###################
+                         MIDI implementation
+                         ###################
+@{ub}
+@WORDWRAP
+
+   midiIn uses wonderful midi.library (C) Bill Barton, Pregnant Badger
+Music, 1987, 1988.  This is a very good software which enables many
+programs to receive MIDI data at one time and to send MIDI data
+through virtual wires and ports inside Amiga.  It is a pity, that so
+few MIDI programs for Amiga use this excellent solution.
+   By the way:  if You know about a good sequencer working with
+midi.library, please let us know.
+
+   Thanks to midi.library midiIn may receive MIDI messages from many
+sources - MIDI interface and/or another programs using midi.library.
+The list of available MIDI sources can be found in the Advanced
+Window.  You can select/deselect sources by clicking on them.  "+"
+before source means that midiIn receives messages from it.  After
+pressing the Refresh gadget midiIn will scan midi.library's resources
+to make a new list of available sources.  You have to refresh the list
+every time You run a new program supposed to send MIDI messages to
+midiIn.
+   If there are no programs using midi.library for output running,
+the only possibility is MidiIn - what means external MIDI interface
+connected to the serial port.
+
+
+MIDI messages understood by midiIn:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ - NoteOn with Velocity parameter - starts the sound with volume
+   depending on sample @{"Velocity" LINK INTERFACE 97} parameter, sample volume and
+   velocity sensitivity set in @{"Details window" LINK INTERFACE 55}.
+
+ - NoteOff - stops the sound; note that if You set @{"duration" LINK HOWTO 27}to
+   ON->ON in the @{"Main window" LINK INTERFACE 18}, You start and stop the sound with
+   the NoteOn message; if a bank is set to DRUM mode Note Off
+   doesn't stop the sound
+
+ - Aftertouch - changes the volume of played sample depending on the
+   Aftertouch value and the @{"Aftertouch" LINK INTERFACE 103} sensitivity set in the
+   @{"Details window" LINK INTERFACE 55}.  It lets You control the volume dynamically, by
+   changing the power of key pressure.  Of course You must have a
+   dynamic keyboard.
+
+ - Pitch Bend - detunes the sample depending on movement of Pitch
+   Bender joystick and Pitch Bender @{"note range" LINK INTERFACE 134} parameter from
+   @{"Details window" LINK INTERFACE 55}.
+
+ - Volume - sets the overall volume on specific MIDI channel; only
+   banks with @{"midi Volume" LINK INTERFACE 124} gadget checked are affected by it
+
+ - Panorama - sets the overall pan on specific MIDI channel; only
+   banks with @{"midi Pan" LINK INTERFACE 128} gadget checked are affected by it
+
+ - ResetAllControllers - sets Volume on all channels to maximum,
+   Panorama and Pitch Bender to the center
+
+ - AllSoundsOff - immidately cuts all sounds played by midiIn
+
+ - AllNotesOff - stops all sounds; unlike AllSoundsOff it fades
+   samples according to their envelope
+
+   In future versions of midiIn we will try to implement the
+Modulation message to control special effects on sample (AM, FM,
+chorus, delay...) and control them with MidiClock.
+
+@ENDNODE
+@NODE TIPS "midiIn Tips & Trix"
+@HELP INTRO
+@PREV MIDIIMP
+@NEXT FUTURE
+@{b}                             ###########
+                             Tips & Trix
+                             ###########
+@{ub}
+@WORDWRAP
+
+
+   Here are some ideas about using midiIn without frustration that it
+doesn't work correctly or it is acting strange.  Most of it should be
+written in other chapters, but this is a kind of summary.  I also
+remind You here about a few handy features.
+
+   - it is important which of midiIn windows is active if You use
+     keyboard shortcuts; moreover, be carefull because some
+     shortcuts mean different things for different windows (for
+     example 'm' turns on/off MIDI control in Main window and sets
+     maximum possible volume in Details window); more about windows
+     managment can be found in the @{"midiIn Interface" LINK INTERFACE} chapter
+
+   - if the @{"Load with project" LINK MENUS 72} flag in Settings menu is set You can
+     unconciously change fundamental parameters of midiIn, just by
+     loading an old project with strange settings, like for example
+     turned off NoteOn message; You can always open the Advanced
+     window and Undo the settings; anyway it is safer to have this
+     flag unset and use it only if really necessary
+
+   - if the @{"midi Volume" LINK INTERFACE 124} gadget in Details window is set it may happen,
+     that a sequencer sends Volume Controller = 0; the sample is
+     then played with 0 volume (no sound), even if midiIn volume
+     is normal; the value of Volume Controller for every channel is
+     shown in the Monitor window
+
+   - when You load a new sample to the bank, first select it's base
+     note, then the range, because if You make it opposite You move
+     the range by interval between the new and old (default) base
+     note; by the way, I remind You that this is very convinient
+     methode of moving the range together with the base note
+
+   - use the Offset slider!  sometimes cutting off first few
+     miliseconds of sound (base drum, for example) makes it have a
+     better attack; You can also achieve different effects, like
+     starting a drum loop from the snare
+
+   - if You don't like the default bank settings (Velocity,
+     Aftertouch, midi Volume and midi Pan set to 0), make Your own
+     'empty' project using copy & paste and load it before You build
+     a new one
+
+   - if You want a specific looped sample to play in background and
+     play other short samples, set the looped sample's priority to
+     lower number, than other samples' priority; it is impossible then
+     that one of short samples mutes the loop when running out of
+     audio channels
+
+   - you can launch midiIn by double-clicking on midiIn's project
+     @{"icon" LINK MENUS 75}. All midiIn settings (including position and size of all
+     windows) will be imported from that project.
+
+   - if you experience strange sound distortion while moving windows
+     you probably have installed a patch called HOGWAITBLIT.  It
+     causes interrupts to halt when graphics system performs blitter
+     operations.  You should disable it prior using midiIn.
+
+@ENDNODE
+@NODE FUTURE "Future versions of midiIn"
+@HELP INTRO
+@PREV TIPS
+@NEXT CONTACT
+@{b}                           ###############
+                           Future versions
+                           ###############
+@{ub}
+@WORDWRAP
+
+   We are still developing midiIn.  When You read this, there are
+probably few new beta versions in testing.  We are waiting for
+feedback from the users.  Please send us suggestions, bug reports and
+ideas.  We want to make midiIn a professional audio application for
+Amiga - an application, which helps Amiga to be considered as a
+serious tool in sound studio system.
+   This version of midiIn is FREE.  However, next version will be
+shareware.  It will have lots of new features.  Our todo list (I can't
+promise all of this will exist in next version - everything depends on
+the user feedback):
+
+ - AHI support
+ - for soundcards users:  4 channels audio output!!!  (2 AHI channels
+   thru soundcard, plus two Amiga hardware 14-bit channels)
+ - new Mixer window with faders and panorama pots for each bank
+ - Amplitude and Frequency Modulation (or tremolo and vibrato)
+   controlled by Modulation Controller and LFO's syncronised to MIDI
+   Clock
+ - new audio level display (LED-like)
+ - real-time effects like delay, chorus controlled by MIDI
+ - tap tempo for easy synchronisation of drum loop samples with
+   playing musicians
+ - harddisk samples maybe...
+ - improved Monitor window - it contains bugs now (all controllers are
+   treated as 14-bit wide)
+ - more controllers in Monitor window
+ - reverse sample and reverse loop
+ - Preview Mode for quick scan thru the Instrument List (clilck&hear)
+ - intelligent AddProject function
+ - faster response to MIDI messages
+ - portamento (glide) in Mono mode
+ - whatever You want ;)
+
+
+  Please don't send us complains about sound quality.  The next
+versions of midiIn will use AHI for mixing and playback, so we will
+not work on audio routines, rather concentrate on using AHI.
+
+@ENDNODE
+@NODE NAJAK "About Najakotiva Software"
+@HELP INTRO
+@PREV CONTACT
+@NEXT CONTACT
+@{b}                      #########################
+                      About Najakotiva Software
+                      #########################
+@{ub}
+@WORDWRAP
+
+   Najakotiva Software is a team of two Amiga fanatics:
+ - @{"Rafal 'Royal' Michalski" LINK CONTACT} - programming and coding.
+   23 years old student of The Technical University in Warsaw. His major
+   is Physics. His hobby is travelling and especially yachting. He is
+   good in computers and prefers Amiga before any other computer. He is
+   also a chief engineer in a computer reseller company in Warsaw. He 
+   joined NAJAKOTIVA group as a part of Najakotiva Software and video
+   operator.
+
+ - @{"Sebastian Witkowski" LINK CONTACT} - idea, beta-testing and documentation.
+   23 years old, student of Sound Engineering Faculty on Academy of
+   Music in Warsaw, musician, member of Najakotiva group. The only sports
+   are in Winter - snowboarding, the rest of the year - paragliding.
+
+  We have an additional beta tester - Daniel Gagnon from Canada.
+Thanx for Your support, Daniel!
+
+
+   Najakotiva Software is a part of a big project - Najakotiva.
+
+   Najakotiva is the multimedia art group from Warsaw, Poland, engaged
+in various forms of artistic creation.  Having started in 1994 as an
+experimental music project, Najakotiva developed its activity to
+photography, computer graphics, video and performance.
+   However, the most important branch of our activity is music.  It
+may be described as electro industrial with live instruments.
+The players are:
+   
+   Renata Gontarz - violin
+   Kostek Usenko - cello
+   Filip Rakowski - drums
+   David Price - percussions
+   Sebastian Witkowski - Amiga, Atari, Korg 01W, Roland SH-101, mixer
+      and other stuff
+   Martin Schmitz - Macintosh, Atari, Roland D-5, Korg DDD, things like that
+   Pawel Kaczmar - didjeridou
+
+   We use the old-style but still alive Atari ST as a sequencer, Amiga
+1200 with midiIn and Macintosh with some Mac soft as sample players.
+   BTW:  if someone can help us in getting a HARD DISK controller for
+Atari 1040 ST we would be grateful!
+
+  Look out for the first Najakotiva album which should be available in
+December 1998 in Poland, probably released by S.P.Records!!!
+
+@ENDNODE
+@NODE CONTACT "Contact Us!"
+@PREV FUTURE
+@NEXT NAJAK
+@{b}                            #############
+                            Contact us!!!
+                            #############
+@{ub}
+  Contact Najakotiva Software:
+
+    Rafal 'Royal' Michalski
+    email: *********
+    snail: *********
+
+    Sebastian Witkowski
+    email: *********
+    snail: *********
+
+
+@ENDNODE

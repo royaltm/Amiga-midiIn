@@ -1,7 +1,7 @@
 OPT OSVERSION=37
 OPT MODULE
 MODULE 'exec/lists','exec/nodes','exec/ports','exec/semaphores',
-       '*midibplists','*soundfx','*mbbanks',
+       '*midibplists','*soundfx_ahi','*mbbanks',
        'libraries/midi','midi',
        'amigalib/tasks','other/ecode',
        'mathieeedoubbas'
@@ -34,7 +34,7 @@ ENDOBJECT
 EXPORT DEF maxchan,maskmaxchan -> maximum channel number (<=31) and mask set by prefs
 
 EXPORT DEF mcontrol,basesetb,rangesetb -> control vars
-EXPORT DEF prilist:PTR TO LONG, bd:PTR TO bank, nbank  ->current bank num.
+EXPORT DEF prilist:PTR TO LONG  ->current banks list.
 EXPORT DEF minfo:PTR TO mrouteinfo,
            mysrclist:PTR TO lh  -> internal list of midi sources names
 
@@ -75,7 +75,7 @@ EXPORT PROC getchannelnote(f)
 ENDPROC -1
 
 
-EXPORT PROC whichbankisplaying(bf:PTR TO CHAR)
+EXPORT PROC whichbankisplaying(bf:PTR TO CHAR,bd:PTR TO bank)
 DEF i:REG,b:REG,ac:PTR TO audiochan
   IF ac:=ach
     FOR i:=0 TO maxchan
@@ -139,6 +139,7 @@ DEF playnote, ctrlbank:PTR TO bank, msg:PTR TO internal_message, mymsg:internal_
   waitsig:=sigmidi OR sigport
   REPEAT
     sig:=Wait(waitsig)
+    lockbanksaccess()
     IF sig AND sigmidi
       WHILE packet:=GetMidiPacket(dest)
         type:=packet.type;  mmsg:=packet.midimsg; a:=mmsg[1]; b:=(mmsg[0] AND $F)+1
@@ -335,6 +336,7 @@ DEF playnote, ctrlbank:PTR TO bank, msg:PTR TO internal_message, mymsg:internal_
         EXIT (SetSignal(0,0) AND sigport) <> 0
       ENDWHILE
     ENDIF
+    releasebanksaccess()
   UNTIL quit
  ENDIF
  freeMRoutes()
@@ -349,7 +351,7 @@ ENDPROC
 
 PROC calcvolume(f)
 DEF ac:PTR TO audiochan,nb:PTR TO bank,
-    voll:REG,volr:REG,vol:REG,pan:REG,vel:REG,vtab:PTR TO INT
+    volume:REG,vol:REG,pan:REG,vel:REG,vtab:PTR TO INT
 
   vtab:={exptable} -> 2048 * INT
 
@@ -363,8 +365,8 @@ DEF ac:PTR TO audiochan,nb:PTR TO bank,
     MOVE.L  vel,vol; BRA.S aftertouch_over
 aftertouch_additive:
     pan:=nb.aftersens; MULU pan,pan; LSL.L #4,vol; MULU pan,vol; DIVU #10000,vol
-    MULU vel,vol; DIVU #2032,vol; NEG.L vol; ADD.L vel,vol
-    /* vol:=vel-((aftch[f]*16*(nb.velsens^2)/10000)*vel/2032) */
+    MULU vel,vol; DIVU #2032,vol; EXT.L vol; NEG.L vol; ADD.L vel,vol
+    /* vol:=vel-((aftch[f]*16*(nb.aftersens^2)/10000)*vel/2032) */
   ELSE
     pan:=aftch[f]; MOVEQ #127,vol; SUB.L pan,vol; BCC.S aftertouch_yes
     MOVE.L  vel,vol; BRA.S aftertouch_over
@@ -374,27 +376,23 @@ aftertouch_yes:
     /* vol:=((127-aftch[f])*16-vel)*(nb.aftersens^2)/10000+vel */
 aftertouch_over:
   ENDIF
-  vol:=nb.volume*vtab[vol]/32767
-  IF nb.mctrlvol THEN vol:=vol*mctrl.volume[ac.midichan-1]/16383
+  volume:=nb.volume*vtab[vol]/32767; LSL.L #5,volume
+  IF nb.mctrlvol THEN volume:=volume*mctrl.volume[ac.midichan-1]/16383
+  LSL.L #3,volume
 
   pan:=nb.panorama+(ac.playnote-(nb.hibound+nb.lobound/2) * nb.panwide)
   IF pan > 256 THEN pan:=256
   IF pan < 0 THEN pan:=0
+  LSL.L #6,pan
   IF nb.mctrlpan
     IF (vel:=mctrl.pan[ac.midichan-1]) < 8192
       pan:=pan*vel/8192
     ELSEIF (vel:=vel-8192) > 0
-      pan:=(256-pan)*vel/8192+pan
+      pan:=(16384-pan)*vel/8192+pan
     ENDIF
   ENDIF
-  IF pan > 128
-    volr:=vol
-    voll:=vol*(256-pan)/128
-  ELSE
-    volr:=vol*pan/128
-    voll:=vol
-  ENDIF
-ENDPROC voll,volr
+  LSL.L #2,pan
+ENDPROC volume,pan
 
 PROC findchannel(pri)
 DEF ac:PTR TO audiochan,f:REG,i:REG,d:REG,p:REG
@@ -424,8 +422,38 @@ findloop:
 ENDPROC f
 
 PROC playbank(snd:PTR TO sfx,nb:PTR TO bank,note,midichan,vel,pitch)
-DEF chan,voll,volr,ac:PTR TO audiochan,loop,
-    act:PTR TO audiochan,nbt:PTR TO bank,f,r,g
+DEF chan,volume,pan,ac:PTR TO audiochan,loop,
+    act:PTR TO audiochan,nbt:PTR TO bank,f:REG,r:REG,g:REG
+  IF (nb.set AND B_MONO) AND ((g:=nb.monoslide)<>0)
+    ac:=ach
+    FOR chan:=0 TO maxchan
+      IF chanfree(chan)=FALSE
+        IF (ac.bank=nb) AND (ac.noteoff<>0)
+          act:=ac
+          FOR f:=chan+1 TO maxchan
+            act++
+            IF act.bank=nb
+              IF r:=nb.release
+                act.noteoff:=0; releasechan(f,r)
+              ELSE
+                soundoff(f)
+              ENDIF
+            ENDIF
+          ENDFOR
+          IF r:=nb.monovsens
+            MOVE.L vel,D0; LSL.L #7,D0; MULU r,D0; DIVU #100,D0
+            MULU g,D0; DIVU #16256,D0; EXT.L D0; SUB.L D0,g
+            /* vel:=vel*128*r)/100; r:=g*vel/16256; g:=g-r */
+          ENDIF
+          ac.playnote:=note
+          ac.midichan:=midichan
+          snd.changepitch(chan,pitch,nb.pitchsens,note,nb.fine-FINE_CENTR+100,nb.base,g)
+          RETURN
+        ENDIF
+      ENDIF
+      ac++
+    ENDFOR
+  ENDIF
   IF (chan:=findchannel(nb.pri)) < 0 THEN RETURN
   ac:=ach[chan]
   aftch[chan]:=128
@@ -433,7 +461,7 @@ DEF chan,voll,volr,ac:PTR TO audiochan,loop,
   ac.bank:=nb
   ac.playnote:=note
   ac.midichan:=midichan
-  voll,volr:=calcvolume(chan)
+  volume,pan:=calcvolume(chan)
   IF nb.set AND B_DRUM
     ac.noteoff:=0; loop:=FALSE
   ELSE
@@ -470,7 +498,7 @@ DEF chan,voll,volr,ac:PTR TO audiochan,loop,
       act++
     ENDFOR
   ENDIF
-  snd.playstereo(chan,loop,note,nb.fine-FINE_CENTR+100,nb.base,voll,volr,pitch,nb.pitchsens,nb.attack,nb.decay,nb.sustainlev,nb.firstskip)
+  snd.play(chan,loop,note,nb.fine-FINE_CENTR+100,nb.base,volume,pan,pitch,nb.pitchsens,nb.attack,nb.decay,nb.sustainlev,nb.firstskip)
 ENDPROC
 
 
@@ -532,7 +560,7 @@ DEF playcode,msg:PTR TO internal_message
     ReleaseSemaphore(playtasksem)
     REPEAT;  WaitPort(extport);  UNTIL msg:=GetMsg(extport)
     IF msg.type=PSG_ALLOCFAILED
-      ObtainSemaphore(playtasksem)
+      ObtainSemaphore(playtasksem) -> wait for task to end itself
       Raise("TASK")  -> something went wrong!!
     ENDIF
     midicontrolarray[MC_VOLUME]:=mctrl.volume
@@ -555,14 +583,14 @@ EXPORT PROC deinstall_playtask()
   END mctrl, ach[32], aftch[32], midicontrolarray[33], playtasksem
 ENDPROC
 
-EXPORT PROC signal_playtask(type,v=0)
+EXPORT PROC signal_playtask(type,bn=0,v=0)
 DEF msg:internal_message
  IF playtask
   msg.mn.ln.pri:=0
   msg.mn.replyport:=extport
   msg.mn.length:=12
   msg.type:=type
-  msg.val1:=bd[nbank]
+  msg.val1:=bn
   msg.val2:=v
   PutMsg(playport,msg)
   REPEAT; WaitPort(extport); UNTIL msg:=GetMsg(extport)
@@ -570,6 +598,23 @@ DEF msg:internal_message
 ENDPROC TRUE
 
 EXPORT PROC getmidicontrolarray(mcm) IS IF midicontrolarray THEN midicontrolarray[mcm] ELSE 0
+
+EXPORT PROC xchgbanksachn(bank1,bank2)
+DEF i,ac:PTR TO audiochan
+  lockbanksaccess()
+  xchgbanks(bank1,bank2)
+  ac:=ach
+  FOR i:=0 TO 31
+    IF ac.bank=bank1
+      ac.bank:=bank2
+    ELSEIF ac.bank=bank2
+      ac.bank:=bank1
+    ENDIF
+    ac++
+  ENDFOR
+  releasebanksaccess()
+ENDPROC
+
 
 /*
 EXPORT PROC messwctrlers()

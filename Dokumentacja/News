@@ -1,0 +1,31 @@
+                   ##############################
+                   News since last public release
+                   ##############################
+
+ - AHI support
+   Now You can use midiIn with Your brand-new Prelude, Melody,
+Delfina, or old-and-still-good Toccata soundcard! 
+
+ - Undo buffor
+   midiIn remembers all Your actions. Everything You do or say...
+sorry... Every change of parameters (incl. add Instrument, Edit
+range, etc) can be undone and redone! You know what You're going to
+undo - it's written in a box under the keyboard.
+   That's not enough. The Undo buffer is saved with every project.
+So You can undo things You've made three weeks ago (it's called a
+time machine, isn't it? ;)
+
+ - Portamento
+   or glissando - in Mono mode. The sound will slide from last
+played note to the current pitch. Try to experiment with drum loops -
+You can imitate vinyl switched off.
+   Portamento can be Velocity-sensitive. The faster You press the
+key, the faster (shorter) the slide will be.
+
+ - New look
+   Now You can add your favourite pattern around the keyboard. The
+bank buttons look different, too.
+
+ - Multi select (copy paste exchange)
+ - Progress Bar
+ - Sorting banks

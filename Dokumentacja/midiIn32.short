@@ -1,6 +1,8 @@
 Short: MIDI-ctrl sample player for FREE (32 chan)
-Author
-
+Uploader: ral@royal.net (Rafal Michalski)
+Author:   ral@royal.net (Rafal Michalski)
+Type:     mus/midi
+Version:  32.015b
 
    midiIn is a MIDI-controlled sample player for Amiga.
    It can be used as a part of sound studio system. Because of usage
@@ -43,7 +45,8 @@ We want feedback - bug reports, ideas, etc. Version with AHI support will
 be shareware. But so far - use it as You want, copy it to Your friends,
 spread it all around the world, a-round-the-wo-orld!
 
-  To install unpack the archive to Your harddisk and run the
-"Install_midiIn" program.
+  To install unpack the archive to Your harddisk and read midiIn.guide for
+further instructions.
+
 
   Have fun and be creative!

@@ -1,95 +1,217 @@
 FailAt 21
+Run <>NIL: rx "address 'PLAY' SAY '-p65 -n Making.'"
+CD W:
 flushcache
-delete #?.m QUIET
+delete #?.m QUIET modules/softmix.m
 IF NOT EXISTS RAM:ec
   Copy E:bin/ec RAM:
   echo SpeedUp!
 ENDIF
-Run <>NIL: rx "address 'PLAY' SAY '-p65 -n Making.'"
-FailAt 1
+versiondate > version.bin
 echo "mbLocale ... " NOLINE
 ec > T:ec_make_log "mbLocale.e"
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbkeycod ... " NOLINE
 ec > T:ec_make_log "mbkeycod.e"
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbtitle ... " NOLINE
 ec > T:ec_make_log "mbtitle.e"
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "simpleiffparse ... "  NOLINE
 ec > T:ec_make_log "simpleiffparse.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "loadssnd ... "  NOLINE
 ec > T:ec_make_log "loadssnd.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "loadsvxbody ... "  NOLINE
 ec > T:ec_make_log "loadsvxbody.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "loadwavedata ... "  NOLINE
 ec > T:ec_make_log "loadwavedata.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "wave ... "  NOLINE
 ec > T:ec_make_log "wave.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "svx ... "  NOLINE
 ec > T:ec_make_log "svx.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "aiff ... "  NOLINE
 ec > T:ec_make_log "aiff.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "extloader ... "  NOLINE
 ec > T:ec_make_log "extloader.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
-echo "play14unlim ... "  NOLINE
-ec > T:ec_make_log "play14unlim.e" 
+echo "mbfxdefs ... " NOLINE
+ec > T:ec_make_log "mbfxdefs.e"
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "linking softmix ... "  NOLINE
+o2m > NIL: modules/softmix
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "playAHI_custom ... "  NOLINE
+ec > T:ec_make_log "playAHI_custom.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "notecalc ... "  NOLINE
 ec > T:ec_make_log "notecalc.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
-echo "soundFX ... "  NOLINE
-ec > T:ec_make_log "soundFX.e" 
+echo "soundFX_ahi ... "  NOLINE
+ec > T:ec_make_log "soundFX_ahi.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "MidiBPlists ... "  NOLINE
 ec > T:ec_make_log "MidiBPlists.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
-echo "mbbanks ... "  NOLINE
-ec > T:ec_make_log "mbbanks.e" 
-echo "ok"
-echo "mbPlay ... "  NOLINE
-ec > T:ec_make_log "mbPlay.e" 
+echo "drawpattern ... "  NOLINE
+ec > T:ec_make_log "drawpattern.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbabout ... "  NOLINE
 ec > T:ec_make_log "mbabout.e"
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
-echo "mbmmonit ... "  NOLINE
-ec > T:ec_make_log "mbmmonit.e"
-echo "ok"
-echo "mbLeds ... "  NOLINE
-ec > T:ec_make_log "mbLeds.e"
-echo "ok"
-echo "mbGui ... "  NOLINE
-ec > T:ec_make_log "mbGui.e" 
-echo "ok"
-echo "mbenvelope ... "  NOLINE
-ec > T:ec_make_log "mbenvelope.e" 
+echo "mbprogressbar ... "  NOLINE
+ec > T:ec_make_log "mbprogressbar.e"
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbreport ... "  NOLINE
 ec > T:ec_make_log "mbreport.e" 
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbbanks ... "  NOLINE
+ec > T:ec_make_log "mbbanks.e" 
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbPlay ... "  NOLINE
+ec > T:ec_make_log "mbPlay.e" 
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbmmonit ... "  NOLINE
+ec > T:ec_make_log "mbmmonit.e"
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbLeds ... "  NOLINE
+ec > T:ec_make_log "mbLeds.e"
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbGui ... "  NOLINE
+ec > T:ec_make_log "mbGui.e" 
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbenvelope ... "  NOLINE
+ec > T:ec_make_log "mbenvelope.e" 
+IF WARN
+  Skip error
+ENDIF
+echo "ok"
+echo "mbundo ... "  NOLINE
+ec > T:ec_make_log "mbundo.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbDiskoper ... "  NOLINE
 ec > T:ec_make_log "mbDiskoper.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbsetup ... "  NOLINE
 ec > T:ec_make_log "mbsetup.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbscopes ... "  NOLINE
 ec > T:ec_make_log "mbscopes.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "mbwindow ... "  NOLINE
 ec > T:ec_make_log "mbwindow.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
 echo "MidiIn ... "  NOLINE
 ec > T:ec_make_log ADDBUF=2 "MidiIn.e" 
+IF WARN
+  Skip error
+ENDIF
 echo "ok"
-FailAt 21
 rx "address 'PLAY' SAY '-p65 -r Made.'"
+Skip end
+
+Lab error
+Echo "Error!!!"
+rx "address 'PLAY' SAY '-p65 -s80 -r Error.'"
+Type RAM:t/ec_make_log
+
+Lab end

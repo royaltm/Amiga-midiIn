@@ -1,13 +1,15 @@
 OPT OSVERSION=37
 OPT MODULE
 
-MODULE '*soundfx'
+MODULE '*mblocale','*soundfx_ahi','*mbreport','*midibplists',
+       'exec/lists','exec/nodes','exec/semaphores'
 
-EXPORT ENUM  LEFTFIX=0,RIGHTFIX,ANYFIX -> it's obsolete
-EXPORT CONST TYPE_VERSION_32=$80
-EXPORT SET   B_LOOP, B_DUR_ON, B_DRUM, B_MONO, B_ADDAFTERT
-EXPORT CONST FINE_CENTR=116
-EXPORT CONST NUMBANKS=60
+EXPORT ENUM   LEFTFIX=0,RIGHTFIX,ANYFIX -> it's obsolete
+EXPORT CONST  TYPE_VERSION_32=$80
+EXPORT SET    B_LOOP, B_DUR_ON, B_DRUM, B_MONO, B_ADDAFTERT
+EXPORT CONST  FINE_CENTR=116
+EXPORT CONST  NUMBANKS=60
+EXPORT ENUM   SORT_PRI, SORT_MIDI, SORT_NAME, SORT_RANGE
 
 EXPORT OBJECT bank
   instr:PTR TO sfx  -> pointer to initialised instrument object
@@ -16,7 +18,7 @@ EXPORT OBJECT bank
   type:CHAR         -> =TYPE_VERSION_32
   base:CHAR         -> base note (60)=C
   fine:CHAR         -> fine-FINE_CENTR= finetune (-100,100)
-  set:CHAR          -> LOOP, DURATION_ON, DRUM, MONOPHONIC
+  set:CHAR          -> LOOP, DURATION_ON, DRUM, MONOPHONIC, ADDITIVEAFTERTOUCH
   lobound:CHAR      -> lo keyboard range
   hibound:CHAR      -> hi keyboard range
   volume:INT        -> 0-512 (512=200%)
@@ -33,19 +35,88 @@ EXPORT OBJECT bank
   mctrlvol:CHAR     -> 0 OR 100; 100 is for MIDI_VOLUME enabled
   mctrlpan:CHAR     -> 0 OR 100; 100 is for MIDI_PAN enabled
   group:CHAR        -> 0-? exclusive group number 0=NONE
-  pad0:CHAR
-  pad1:INT
+  monovsens:CHAR    -> monoslide velocity sens (0-100)
+  monoslide:INT     -> uptime for sliding in modo mone (0=off) (0-1500)
 ENDOBJECT
 
-EXPORT DEF bd:PTR TO bank, prilist:PTR TO LONG
+EXPORT DEF prilist:PTR TO LONG
+DEF lastexcp,          -> for displaying errors on unrecognized sample type
+    banksem:PTR TO ss
+/*
+  ============================================================================
+                              Banks basic commands
+  ============================================================================
+*/
+EXPORT PROC lockbanksaccess() IS ObtainSemaphore(banksem)
+EXPORT PROC releasebanksaccess()
+  IF banksem.nestcount THEN ReleaseSemaphore(banksem)
+ENDPROC
 
+EXPORT PROC cmpbanks(bn1:PTR TO bank, bn2:PTR TO bank, type)
+  IF bn1.instr = NIL THEN IF bn2.instr <> NIL THEN RETURN -1
+  IF bn2.instr = NIL THEN IF bn1.instr <> NIL THEN RETURN 1
+  SELECT type
+    CASE SORT_PRI
+      IF bn2.pri > bn1.pri THEN RETURN 1
+      IF bn2.pri < bn1.pri THEN RETURN -1
+    CASE SORT_MIDI
+      IF bn2.midi > bn1.midi THEN RETURN 1
+      IF bn2.midi < bn1.midi THEN RETURN -1
+    CASE SORT_NAME
+      IF (bn1.instr<>NIL) AND (bn2.instr<>NIL) THEN RETURN OstrCmp(bn1.instr.ln.name, bn2.instr.ln.name)
+    CASE SORT_RANGE
+      IF bn2.lobound > bn1.lobound THEN RETURN 1
+      IF bn2.lobound < bn1.lobound THEN RETURN -1
+      IF bn2.hibound > bn1.hibound THEN RETURN 1
+      IF bn2.hibound < bn1.hibound THEN RETURN -1
+  ENDSELECT      
+ENDPROC 0
 
-EXPORT PROC deletebank(bn:PTR TO bank)
+EXPORT PROC clearinstr(bn:PTR TO bank)
 DEF snd:PTR TO sfx
   IF snd:=bn.instr
-    bn.instr:=NIL
-    snd.unload()
+    bn.instr:=NIL; snd.unload()
   ENDIF
+ENDPROC snd
+
+EXPORT PROC setinstr(bn:PTR TO bank, snd:PTR TO sfx) HANDLE
+  IF snd=bn.instr THEN RETURN TRUE
+  clearinstr(bn)
+  IF snd=NIL THEN RETURN TRUE
+  printstatus(getLocStr(STRID_LOADINGSAMPLE),snd.ln.name,0)
+  snd.load()
+  bn.instr:=snd
+EXCEPT
+  report_exception()
+  RETURN FALSE
+ENDPROC TRUE
+
+EXPORT PROC setinstrname(bn:PTR TO bank, slist:PTR TO lh, instrname)
+DEF snd:PTR TO sfx, x=FALSE
+    IF instrname=0
+      clearinstr(bn); x:=TRUE
+    ELSEIF StrLen(FilePart(instrname))=0
+      clearinstr(bn); x:=TRUE
+    ELSEIF snd:=addsnd(instrname,slist)
+      x:=setinstr(bn,snd)
+    ENDIF
+ENDPROC x
+
+EXPORT PROC xchgbanks(bn1:PTR TO bank,bn2:PTR TO bank)
+DEF bn:bank
+  CopyMem(bn1,bn,SIZEOF bank)
+  bn1.instr:=bn2.instr; CopyMem(bn2,bn1,SIZEOF bank)
+  bn2.instr:=bn.instr; CopyMem(bn,bn2,SIZEOF bank)
+ENDPROC
+
+EXPORT PROC setbank(bn:PTR TO bank, fbn:PTR TO bank)
+DEF x
+  x:=setinstr(bn, fbn.instr); fbn.instr:=bn.instr
+  CopyMem(fbn, bn, SIZEOF bank)
+ENDPROC x
+
+EXPORT PROC deletebank(bn:PTR TO bank)
+  clearinstr(bn)
   bn.midi:=1
   bn.pri:=1
   bn.type:=TYPE_VERSION_32
@@ -68,10 +139,12 @@ DEF snd:PTR TO sfx
   bn.mctrlvol:=0
   bn.mctrlpan:=0
   bn.group:=0
+  bn.monovsens:=0
+  bn.monoslide:=0
 ENDPROC
 
-EXPORT PROC initbanks(cn=FALSE:PTR TO bank)
-DEF f:REG,bn:PTR TO bank
+EXPORT PROC initbanks(bd:PTR TO bank)
+DEF f,bn:PTR TO bank
   FOR f:=0 TO NUMBANKS-1
     bn:=bd[f]
     bn.instr:=0
@@ -81,8 +154,8 @@ DEF f:REG,bn:PTR TO bank
     bn.base:=60
     bn.fine:=FINE_CENTR
     bn.set:=0
-    bn.lobound:=128/NUMBANKS*f
-    bn.hibound:=128/NUMBANKS*f+127-(128/NUMBANKS*(NUMBANKS-1))
+    bn.lobound:=0   -> 128/NUMBANKS*f
+    bn.hibound:=127 ->128/NUMBANKS*f+127-(128/NUMBANKS*(NUMBANKS-1))
     bn.volume:=256
     bn.velsens:=0
     bn.release:=0
@@ -97,36 +170,16 @@ DEF f:REG,bn:PTR TO bank
     bn.mctrlvol:=0
     bn.mctrlpan:=0
     bn.group:=0
+    bn.monovsens:=0
+    bn.monoslide:=0
     prilist[f]:=bn
   ENDFOR
-  IF cn
-    cn.instr:=0
-    cn.midi:=1
-    cn.pri:=1
-    cn.type:=TYPE_VERSION_32
-    cn.base:=60
-    cn.fine:=FINE_CENTR
-    cn.set:=0
-    cn.lobound:=0
-    cn.hibound:=127
-    cn.volume:=256
-    cn.velsens:=0
-    cn.release:=0
-    cn.panorama:=128
-    cn.panwide:=0
-    cn.pitchsens:=0
-    cn.attack:=0
-    cn.decay:=0
-    cn.sustainlev:=255
-    cn.aftersens:=0
-    cn.firstskip:=0
-    cn.mctrlvol:=0
-    cn.mctrlpan:=0
-    cn.group:=0
+  IF banksem=NIL
+    NEW banksem; InitSemaphore(banksem)
   ENDIF
 ENDPROC
 
-EXPORT PROC sortbank()
+EXPORT PROC sortbanks()
 DEF f:REG,bn:PTR TO bank,bankpri:REG,i:REG,cb:PTR TO bank
   FOR i:=1 TO NUMBANKS-1
     cb:=prilist[i]
@@ -169,4 +222,58 @@ DEF l,h
   IF bn.mctrlvol > 100 THEN RETURN FALSE
   IF bn.mctrlpan > 100 THEN RETURN FALSE
   IF bn.group > 16 THEN RETURN FALSE
+  IF bn.monovsens > 100 THEN bn.monovsens:=0
+  IF (bn.monoslide > 1500) OR (bn.monoslide < 0) THEN bn.monoslide:=0
 ENDPROC TRUE
+
+/*
+  ============================================================================
+                          Sample list basic commands
+  ============================================================================
+*/
+
+EXPORT PROC addsnd(name, slist:PTR TO lh, quiet=FALSE) HANDLE
+DEF snd=0:PTR TO sfx,a,b, ln:PTR TO lln
+ IF ln:=FindName(slist,FilePart(name)) THEN RETURN ln.pointer,FALSE
+ NEW snd
+ a,b:=snd.init(name)
+ printstatus(0,snd.ln.name,b)
+ addsorted(slist,snd.ln)
+EXCEPT
+  IF snd THEN END snd
+  printstatus(0,FilePart(name),'????')
+  IF (exception<>"UNRE") OR (lastexcp=FALSE)
+    lastexcp:=IF exception="UNRE" THEN TRUE ELSE FALSE
+    IF quiet=FALSE THEN report_exception()
+  ELSE
+    Delay(1)
+  ENDIF
+ENDPROC snd,IF snd THEN TRUE ELSE FALSE
+
+EXPORT PROC addingsamplesover()
+  closestatus();  lastexcp:=FALSE
+ENDPROC
+
+EXPORT PROC delsnd(snd:PTR TO sfx, banks:PTR TO bank, notused=FALSE)
+DEF f=0,removed=FALSE
+  WHILE f < NUMBANKS
+    IF banks[f].instr=snd
+      IF notused=FALSE
+        banks[f].instr:=NIL
+      ELSE
+        f:=NUMBANKS+1
+      ENDIF
+    ENDIF
+    INC f
+  ENDWHILE
+  IF f=NUMBANKS; Remove(snd.ln);  END snd;  removed:=TRUE; ENDIF
+ENDPROC removed
+
+EXPORT PROC clearsmplist(bn:PTR TO bank,slist:PTR TO lh,notused=FALSE)
+DEF ln:PTR TO lln,ln2, cleared=FALSE
+  ln:=slist.head
+  WHILE ln2:=ln.ln.succ
+    IF delsnd(ln.pointer, bn, notused) THEN cleared:=TRUE
+    ln:=ln2
+  ENDWHILE
+ENDPROC cleared

@@ -3,9 +3,9 @@ OPT OSVERSION=37
 OPT MODULE
 
 
-MODULE  'intuition/intuition','exec/lists','exec/nodes','tools/EasyGUI',
-        'libraries/midi','midi','libraries/midibase',
-        '*midibplists','*soundfx','*mbdiskoper','*mbreport',
+MODULE  'intuition/intuition','exec/lists','exec/nodes','tools/EasyGUI','dos/dos',
+        'libraries/midi','midi','libraries/midibase','ahi','devices/ahi',
+        '*midibplists','*soundfx_ahi','*mbdiskoper','*mbreport',
         '*mblocale','*title','*mbtitle','*mbplay','*mbbanks','*mbkeycod'
 
 EXPORT DEF dest:PTR TO mdest,
@@ -19,39 +19,41 @@ EXPORT DEF mh:PTR TO multihandle,
            envgh:PTR TO guihandle,    -> envelope
            scopegh:PTR TO guihandle,  -> scope
            mongh:PTR TO guihandle,    -> midimonitor
-           setgh:PTR TO guihandle     -> settings
+           setgh:PTR TO guihandle,    -> midi settings
+           saugh:PTR TO guihandle     -> audio settings
           ->^ window stuff
 EXPORT DEF menuptr  -> mainmenuptr
-EXPORT DEF maxchan,maskmaxchan, mcontrol, ledbool, nbank,
+EXPORT DEF maxchan,maskmaxchan, mcontrol, nbank,
            mbprefs:PTR TO mbprefs, msgflags, chanflags
 EXPORT DEF currmcmon
                     ->^ prefs stuff
 DEF routes:PTR TO LONG  -> array of current midi routes (last entry = -1)
-DEF dmaper  -> custom prefs stuff
-DEF sgh_dmahz, sgh_chan, sgh_msrclist, sgh_ledchk, -> gadgdets
-    sgh_noteoff, sgh_noteon, sgh_keypress, sgh_ctrl, sgh_chanpress, sgh_pitchbend,
+DEF ahitextattr -> for ahirequester
+                                             -> gadgdets
+DEF agh_audioid,agh_chan,agh_mxfreq,agh_mxftxt,
+    agh_ahiname,agh_ahidriver,agh_ahiauthor,agh_ahiversion,agh_ahicopyright
+
+DEF sgh_msrclist,sgh_noteoff, sgh_noteon, sgh_keypress,
+    sgh_ctrl, sgh_chanpress, sgh_pitchbend,
     sgh_c1,sgh_c2,sgh_c3,sgh_c4,sgh_c5,sgh_c6,sgh_c7,sgh_c8,
     sgh_c9,sgh_ca,sgh_cb,sgh_cc,sgh_cd,sgh_ce,sgh_cf,sgh_cg
 DEF title_m:PTR TO title_keys     -> ^^^ EGUI plugins
-DEF setwithprojects, setlayout, setsaveicons    -> menus status
-
-
+DEF title_a:PTR TO title_keys     -> ^^^ EGUI plugins
+DEF setwithprojects, setlayout, setsaveicons, setsaveundo    -> menus status
+DEF freqtab:PTR TO LONG,freqnum,ahi_name_str,ahi_author_str,ahi_driver_str,ahi_copyright_str,ahi_version_str
+DEF indexfreq,mixfreq,ahiaudioid,ahi_mode_str
 
 EXPORT PROC initprefs(pname,bnk)  -> set initial prefs value & set soundfx
 
   newlist(mysrclist)  -> this must be the first thing!!!
-  setwithprojects:=TRUE
-  setlayout:=FALSE
-  setsaveicons:=TRUE
+  setwithprojects:=TRUE;  setlayout:=FALSE;  setsaveicons:=TRUE; setsaveundo:=TRUE
   refresh_srclist()
   loadsettings(smplist,mbprefs,bnk,pname)
 ->WriteF('mainx=\d mainy=\d\n',mbprefs.mainwinx,mbprefs.mainwiny)
 ->WriteF('volx=\d voly=\d hide=\d\n',mbprefs.volumewinx,mbprefs.volumewiny,mbprefs.volumehide)
 ->WriteF('scx=\d scy=\d hide=\d\n',mbprefs.scopewinx,mbprefs.scopewiny,mbprefs.scopehide)
-  dmaper:=mbprefs.dmaper;  currentdmacycle()
-  setDMAperiod(dmaper)
-->WriteF('dma period set!\n')
-  ledbool:=IF mbprefs.led <> 0 THEN TRUE ELSE FALSE
+  ahiaudioid:=mbprefs.ahiaudioid;  getaudioahiattrs(ahiaudioid)
+  setmixfreq(mbprefs.mixfreq)
   mcontrol:=IF mbprefs.midictrl <> 0 THEN TRUE ELSE FALSE
   IF (maxchan:=mbprefs.maxchannels) > 31 THEN maxchan:=31
   IF maxchan < 1 THEN maxchan:=1
@@ -63,94 +65,90 @@ EXPORT PROC initprefs(pname,bnk)  -> set initial prefs value & set soundfx
   IF (currmcmon:=mbprefs.currentmcm) > 32 THEN currmcmon:=32
   IF currmcmon < 0 THEN currmcmon:=0
   mbprefs.currentmcm:=currmcmon
+  audio_attrs([SFX_SET_AUDIO_ID,ahiaudioid,
+               SFX_SET_CHANNELS,maxchan+1,
+               SFX_SET_MIXFREQ,mixfreq,
+               NIL])
   refresh_srclist()
   changeMRoutes()
 ENDPROC
 
+
+PROC setmixfreq(freq)
+DEF i,m=$7FFFFFFF,x=-1
+  IF freqtab
+    FOR i:=0 TO freqnum-1 
+      IF Abs(freq-freqtab[i]) < m; m:=Abs(freq-freqtab[i]); x:=i; ENDIF
+    ENDFOR
+    IF x>=0; indexfreq:=x; mixfreq:=freqtab[x]; ENDIF
+  ENDIF
+ENDPROC
+/* ========================================================================
+                         menu & load/save functions
+   ======================================================================== */
+
 EXPORT PROC menu_setlayout(info)
 DEF item:PTR TO menuitem,flag
-  item:=ItemAddress(menuptr, FULLMENUNUM(2,6,0))
+  item:=ItemAddress(menuptr, FULLMENUNUM(2,7,0))
   flag:=IF item.flags AND CHECKED THEN TRUE ELSE FALSE
   setlayout:=IF flag THEN TRUE ELSE FALSE
 ENDPROC
 
 EXPORT PROC menu_setwithprojects(info)
 DEF item:PTR TO menuitem,flag
-  item:=ItemAddress(menuptr, FULLMENUNUM(2,7,0))
+  item:=ItemAddress(menuptr, FULLMENUNUM(2,8,0))
   flag:=IF item.flags AND CHECKED THEN TRUE ELSE FALSE
   setwithprojects:=IF flag THEN TRUE ELSE FALSE
 ENDPROC
 
 EXPORT PROC menu_setsaveicons(info)
 DEF item:PTR TO menuitem,flag
-  item:=ItemAddress(menuptr, FULLMENUNUM(2,8,0))
+  item:=ItemAddress(menuptr, FULLMENUNUM(2,9,0))
   flag:=IF item.flags AND CHECKED THEN TRUE ELSE FALSE
   setsaveicons:=IF flag THEN TRUE ELSE FALSE
 ENDPROC
 
-PROC updatesetwin()   -> update setwin
-  IF setgh
-    setcycle(setgh,sgh_dmahz,currentdmacycle())
-    setslide(setgh,sgh_chan,maxchan+1)
-    pb_refresh(0)
-    setcheck(setgh,sgh_ledchk,ledbool)
-    setcheck(setgh,sgh_noteoff,msgflags AND MMF_NOTEOFF)
-    setcheck(setgh,sgh_noteon,msgflags AND MMF_NOTEON)
-    setcheck(setgh,sgh_keypress,msgflags AND MMF_POLYPRESS)
-    setcheck(setgh,sgh_ctrl,msgflags AND MMF_CTRL)
-    setcheck(setgh,sgh_chanpress,msgflags AND MMF_CHANPRESS)
-    setcheck(setgh,sgh_pitchbend,msgflags AND MMF_PITCHBEND)
-    setcheck(setgh,sgh_c1,IF chanflags AND $1 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c2,IF chanflags AND $2 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c3,IF chanflags AND $4 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c4,IF chanflags AND $8 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c5,IF chanflags AND $10 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c6,IF chanflags AND $20 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c7,IF chanflags AND $40 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c8,IF chanflags AND $80 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_c9,IF chanflags AND $100 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_ca,IF chanflags AND $200 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_cb,IF chanflags AND $400 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_cc,IF chanflags AND $800 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_cd,IF chanflags AND $1000 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_ce,IF chanflags AND $2000 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_cf,IF chanflags AND $4000 THEN TRUE ELSE FALSE)
-    setcheck(setgh,sgh_cg,IF chanflags AND $8000 THEN TRUE ELSE FALSE)
-  ENDIF
+EXPORT PROC menu_setsaveundo(info)
+DEF item:PTR TO menuitem,flag
+  item:=ItemAddress(menuptr, FULLMENUNUM(2,10,0))
+  flag:=IF item.flags AND CHECKED THEN TRUE ELSE FALSE
+  setsaveundo:=IF flag THEN TRUE ELSE FALSE
+ENDPROC
+
+EXPORT PROC menu_settings(info)
+  prefs_set(mbprefs)
+  savesettings(smplist,mbprefs)
 ENDPROC
 
 EXPORT PROC saveproject(name,slist:PTR TO lh,bnk:PTR TO bank)
 DEF tmprefs:mbprefs
   CopyMem(mbprefs,tmprefs,SIZEOF mbprefs)
-  tmprefs.dmaper:=dmaper
-  tmprefs.led:=ledbool
-  tmprefs.midictrl:=mcontrol
-  tmprefs.activeb:=nbank
-  tmprefs.maxchannels:=maxchan
-  tmprefs.msgflags:=msgflags
-  tmprefs.chanflags:=chanflags
-  tmprefs.currentmcm:=currmcmon
-  prefs_layout(tmprefs)
-  save_project(name,slist,bnk,tmprefs,setsaveicons)
+  prefs_set(tmprefs)
+  save_project(name,slist,bnk,tmprefs,setsaveicons,setsaveundo)
 ENDPROC
 
 EXPORT PROC loadproject(name,slist:PTR TO lh,bnk:PTR TO bank) HANDLE
 DEF tmpprefs:mbprefs
+  CopyMem(mbprefs,tmpprefs,SIZEOF mbprefs)
   IF setwithprojects
     setlistvlabels(setgh,sgh_msrclist,-1)
     refresh_srclist()
     IF tmpprefs:=load_project(name,slist,bnk,tmpprefs)
-      dmaper:=tmpprefs.dmaper;  currentdmacycle()
-      setDMAperiod(dmaper)
-      led_filt(0,tmpprefs.led)
+      ahiaudioid:=tmpprefs.ahiaudioid; getaudioahiattrs(ahiaudioid)
+      setmixfreq(tmpprefs.mixfreq)
   ->  mcontrol:=IF tmpprefs.midictrl <> 0 THEN TRUE ELSE FALSE
       IF (maxchan:=tmpprefs.maxchannels) > 31 THEN maxchan:=31
       IF maxchan < 1 THEN maxchan:=1
       maskmaxchan:=Shl(1,maxchan+1)-1
       msgflags:=tmpprefs.msgflags AND (MMF_NOTEOFF OR MMF_NOTEON OR MMF_PITCHBEND OR MMF_POLYPRESS OR MMF_CTRL OR MMF_CHANPRESS)
       chanflags:=tmpprefs.chanflags
+      audio_attrs([SFX_SET_AUDIO_ID,ahiaudioid,
+                   SFX_SET_CHANNELS,maxchan+1,
+                   SFX_SET_MIXFREQ,mixfreq,
+                   SFX_SET_APPLYAUDIO,TRUE,
+                   NIL])
     ENDIF
-    updatesetwin()
+    updateaudwin(TRUE); updatemidiwin()
   ELSE
     load_project(name,slist,bnk,NIL)
   ENDIF
@@ -159,22 +157,16 @@ EXCEPT DO
   IF exception THEN ReThrow()
 ENDPROC
 
-
-EXPORT PROC menu_settings(info)
-  mbprefs.dmaper:=dmaper
-  mbprefs.led:=ledbool
-  mbprefs.midictrl:=mcontrol
-  mbprefs.activeb:=nbank
-  mbprefs.maxchannels:=maxchan
-  mbprefs.msgflags:=msgflags
-  mbprefs.chanflags:=chanflags
-  mbprefs.currentmcm:=currmcmon
-  prefs_layout(mbprefs)
-  savesettings(smplist,mbprefs)
-ENDPROC
-
-PROC prefs_layout(prefs:PTR TO mbprefs)
+PROC prefs_set(prefs:PTR TO mbprefs)
 DEF window:PTR TO window
+ prefs.mixfreq:=mixfreq
+ prefs.ahiaudioid:=ahiaudioid
+ prefs.midictrl:=mcontrol
+ prefs.activeb:=nbank
+ prefs.maxchannels:=maxchan
+ prefs.msgflags:=msgflags
+ prefs.chanflags:=chanflags
+ prefs.currentmcm:=currmcmon
  IF setlayout
   IF window:=gh.wnd
     prefs.mainwinx:=window.leftedge
@@ -226,7 +218,7 @@ DEF window:PTR TO window
  ENDIF
 ENDPROC
 
-EXPORT PROC menu_advanced(info)
+EXPORT PROC menu_advancedmidi(info)
   IF setgh.wnd
     ActivateWindow(setgh.wnd)
     WindowToFront(setgh.wnd)
@@ -236,14 +228,45 @@ EXPORT PROC menu_advanced(info)
   ENDIF
 ENDPROC
 
+EXPORT PROC menu_advancedaudio(info)
+  IF saugh.wnd
+    ActivateWindow(saugh.wnd)
+    WindowToFront(saugh.wnd)
+  ELSE
+    settext(saugh,agh_audioid,'')
+    settext(saugh,agh_ahiname,'')
+    settext(saugh,agh_ahidriver,'')
+    settext(saugh,agh_ahiauthor,'')
+    settext(saugh,agh_ahiversion,'')
+    settext(saugh,agh_ahicopyright,'')
+    openwin(saugh)
+    updateaudwin()
+    IF saugh.wnd THEN SetWindowTitles(saugh.wnd,-1,mainbartext)
+  ENDIF
+ENDPROC
+
+/* ========================================================================
+                               gui definitions
+   ======================================================================== */
+
 EXPORT PROC close_setwin(info)
   IF setgh.wnd
     closewin(setgh)
   ENDIF
 ENDPROC
 
+EXPORT PROC close_sauwin(info)
+  IF saugh.wnd
+    closewin(saugh)
+  ENDIF
+ENDPROC
+
 PROC clean_setwin(info)
   setgh:=0
+ENDPROC
+
+PROC clean_sauwin(info)
+  saugh:=0
 ENDPROC
 
 PROC setwin_act(info,tl:PTR TO title_keys)
@@ -252,22 +275,57 @@ PROC setwin_act(info,tl:PTR TO title_keys)
   ENDIF
 ENDPROC
 
+PROC sauwin_act(info,tl:PTR TO title_keys)
+  IF tl.keycode=ESC_CODE
+    close_sauwin(info)
+  ENDIF
+ENDPROC
+
+PROC saudmgui()
+DEF a,b,c,d,e
+  END title_a
+  RETURN [BEVELR,
+  [ROWS,
+    [COLS,
+      [SBUTTON,{ahimodeset},getLocStr(STRID_AHIMODE,{a}),0, a ],
+      agh_audioid:=[TEXT,IF ahi_mode_str THEN ahi_mode_str ELSE '','',TRUE,8]
+    ],
+    [COLS,
+    agh_mxfreq:=[SLIDE,{mfreqset},getLocStr(STRID_MFREQ,{b}),0,0,freqnum-1,0,6,'',0, b ],
+    agh_mxftxt:=[NUM,0,'',FALSE,6]
+    ],
+    agh_chan:=[SLIDE,{chanset},getLocStr(STRID_CHANPOLY,{c}),0,2,32,maxchan+1,6,'%2ld',0, c ],
+    [COLS,
+      [SBUTTON,{undoset},getLocStr(STRID_UNDO,{d}),0, d ],
+      [SBUTTON,{applyaudio},getLocStr(STRID_APPLY,{e}),0, e ]
+    ],
+    [PLUGIN, {sauwin_act}, NEW title_a.setup(getLocStr(STRID_AHIAUDIOINFO), TITLE_NORMAL) ,FALSE,NIL],
+    agh_ahiname:=[TEXT,IF ahi_name_str THEN ahi_name_str ELSE '',getLocStr(STRID_AHIINFONAME),TRUE,12],
+    agh_ahidriver:=[TEXT,IF ahi_driver_str THEN ahi_driver_str ELSE '',getLocStr(STRID_AHIINFODRIVER),TRUE,12],
+    agh_ahiauthor:=[TEXT,IF ahi_author_str THEN ahi_author_str ELSE '',getLocStr(STRID_AHIINFOAUTHOR),TRUE,12],
+    agh_ahiversion:=[TEXT,IF ahi_version_str THEN ahi_version_str ELSE '',getLocStr(STRID_AHIINFOVERSION),TRUE,12],
+    agh_ahicopyright:=[TEXT,IF ahi_copyright_str THEN ahi_copyright_str ELSE '',getLocStr(STRID_AHIINFOCOPYRIGHT),TRUE,12]
+  ]
+]
+ENDPROC
+
+EXPORT PROC open_sauwin(screen,ta)
+  ahitextattr:=ta
+  saugh:=addmultiA(mh,getLocStr(STRID_MIDIINADVANCEDAUDIO),saudmgui(),
+    [EG_CLOSE,{close_sauwin},
+     EG_CLEAN,{clean_sauwin},
+     EG_SCRN,screen,
+     EG_HIDE, TRUE,
+     EG_FONT,ta,
+      0,0])
+ENDPROC
+
+
 EXPORT PROC open_setwin(screen,ta)
-DEF d,c,l,p,aa,bb,cc,dd,ee,ff
+DEF d,c,l,p,aa,bb,cc,dd,ee,ff,u
 
   setgh:=addmultiA(mh,getLocStr(STRID_MIDIINADVANCED),
   [ROWS,
-    [BEVEL,[BEVELR,
-      [ROWS,
-        sgh_dmahz:=[CYCLE,{dmaset},getLocStr(STRID_DMA,{d}),[
-        '48 kHz','41 kHz','28 kHz','20 kHz','14 kHz',0],currentdmacycle(),0, d ],
-        sgh_chan:=[SLIDE,{chanset},getLocStr(STRID_CHANPOLY,{c}),0,2,32,maxchan+1,6,'%2ld',0, c ],
-        [COLS,
-          [SBUTTON,{undoset},getLocStr(STRID_UNDO),0, 0 ],
-          sgh_ledchk:=[CHECK,{led_filt},getLocStr(STRID_LEDFILTER,{l}),ledbool,TRUE,0, l ]
-        ]
-      ]
-    ]],
     [PLUGIN, {setwin_act}, NEW title_m.setup(getLocStr(STRID_MIDIMESANDCHAN), TITLE_NORMAL) ,FALSE,NIL],
     [COLS,
       [ROWS,
@@ -283,7 +341,7 @@ DEF d,c,l,p,aa,bb,cc,dd,ee,ff
        [SBUTTON,{pb_refresh},getLocStr(STRID_REFRESH,{p}),0, p ]
       ],
       [ROWS,
-        [SBUTTON,{undomidi},getLocStr(STRID_UNDO),0, 0 ],
+        [SBUTTON,{undomidi},getLocStr(STRID_UNDO,{u}),0, u ],
         [BEVEL,[EQCOLS,
           [EQROWS,
             sgh_c1:=[CHECK,{chk_mc1},getLocStr(STRID_C01),chanflags AND $1,0, 0],
@@ -317,65 +375,114 @@ DEF d,c,l,p,aa,bb,cc,dd,ee,ff
 
 ENDPROC
 
-dmapresets:
-INT 73,86,125,172,250
-
-PROC currentdmacycle()
-DEF i,t:PTR TO INT
-  t:={dmapresets}
-  FOR i:=0 TO 4
-    IF dmaper=t[i] THEN RETURN i
-  ENDFOR
-  i:=2; dmaper:=t[i]
-ENDPROC i
-
-PROC modifyMRouteInfos(chnf,msgf)
-DEF i=0:REG,mr:REG
-  minfo.msgflags:=msgf AND (MMF_NOTEOFF OR MMF_NOTEON)
-  minfo.chanflags:=chnf
-  minfo.chanoffset:=0
-  minfo.noteoffset:=0
-  minfo.sysexmatch::rimatch.flags:=0
-  minfo.ctrlmatch::rimatch.flags:=0
-  IF routes
-    WHILE routes[i++]<>-1 DO IF mr:=routes[i-1] THEN ModifyMRoute(mr,minfo)
+PROC updateaudwin(chgui=FALSE)   -> update sauwin
+  IF saugh
+    IF chgui
+/*      setnum(saugh,agh_mxftxt,0)
+      settext(saugh,agh_audioid,'')
+      settext(saugh,agh_ahiname,'')
+      settext(saugh,agh_ahidriver,'')
+      settext(saugh,agh_ahiauthor,'')
+      settext(saugh,agh_ahiversion,'')
+      settext(saugh,agh_ahicopyright,'')*/
+      changegui(saugh,saudmgui())
+    ENDIF
+    settext(saugh,agh_audioid,IF ahi_mode_str THEN ahi_mode_str ELSE '')
+    setslide(saugh,agh_chan,maxchan+1)
+    setslide(saugh,agh_mxfreq,indexfreq)
+    setnum(saugh,agh_mxftxt,mixfreq)
+    settext(saugh,agh_ahiname,IF ahi_name_str THEN ahi_name_str ELSE '')
+    settext(saugh,agh_ahidriver,IF ahi_driver_str THEN ahi_driver_str ELSE '')
+    settext(saugh,agh_ahiauthor,IF ahi_author_str THEN ahi_author_str ELSE '')
+    settext(saugh,agh_ahiversion,IF ahi_version_str THEN ahi_version_str ELSE '')
+    settext(saugh,agh_ahicopyright,IF ahi_copyright_str THEN ahi_copyright_str ELSE '')
   ENDIF
-  minfo.msgflags:=msgf
-  signal_playtask(PSG_MINFO)   -> signal play task "we've changed minfo"
-ENDPROC TRUE
-/* ======================== GUI Stuff ============================ */
-
-PROC undoset(info)
-  dmaper:=mbprefs.dmaper;  currentdmacycle()
-  IF mbprefs.led <> 0 THEN ledbool:=TRUE ELSE ledbool:=FALSE
-  maxchan:=mbprefs.maxchannels;  maskmaxchan:=Shl(1,maxchan+1)-1
-  setDMAperiod(dmaper)
-  updatesetwin()
 ENDPROC
 
-PROC dmaset(info,set)
-DEF t:PTR TO INT
-  t:={dmapresets}
-  dmaper:=t[set]
-  setDMAperiod(dmaper)
+PROC updatemidiwin()  -> update midiwin
+  IF setgh
+    pb_refresh(0)
+    setcheck(setgh,sgh_noteoff,msgflags AND MMF_NOTEOFF)
+    setcheck(setgh,sgh_noteon,msgflags AND MMF_NOTEON)
+    setcheck(setgh,sgh_keypress,msgflags AND MMF_POLYPRESS)
+    setcheck(setgh,sgh_ctrl,msgflags AND MMF_CTRL)
+    setcheck(setgh,sgh_chanpress,msgflags AND MMF_CHANPRESS)
+    setcheck(setgh,sgh_pitchbend,msgflags AND MMF_PITCHBEND)
+    setcheck(setgh,sgh_c1,IF chanflags AND $1 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c2,IF chanflags AND $2 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c3,IF chanflags AND $4 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c4,IF chanflags AND $8 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c5,IF chanflags AND $10 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c6,IF chanflags AND $20 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c7,IF chanflags AND $40 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c8,IF chanflags AND $80 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_c9,IF chanflags AND $100 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_ca,IF chanflags AND $200 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_cb,IF chanflags AND $400 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_cc,IF chanflags AND $800 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_cd,IF chanflags AND $1000 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_ce,IF chanflags AND $2000 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_cf,IF chanflags AND $4000 THEN TRUE ELSE FALSE)
+    setcheck(setgh,sgh_cg,IF chanflags AND $8000 THEN TRUE ELSE FALSE)
+  ENDIF
+ENDPROC
+
+
+/* ========================================================================
+                                   GUI Stuff
+   ======================================================================== */
+/*------------------------------ audio advanced ----------------------------*/
+
+PROC undoset(info)
+  maxchan:=mbprefs.maxchannels;  maskmaxchan:=Shl(1,maxchan+1)-1
+  ahiaudioid:=mbprefs.ahiaudioid;  getaudioahiattrs(ahiaudioid)
+  setmixfreq(mbprefs.mixfreq)
+  audio_attrs([SFX_SET_AUDIO_ID,ahiaudioid,
+               SFX_SET_CHANNELS,maxchan+1,
+               SFX_SET_MIXFREQ,mixfreq,
+               SFX_SET_APPLYAUDIO,TRUE,
+               NIL])
+  updateaudwin(TRUE)
+ENDPROC
+
+PROC ahimodeset(info)
+DEF auid
+  blockallwindows()
+  auid:=getaudioahimode(saugh.wnd)
+  unblockallwindows()
+  IF auid <> AHI_INVALID_ID
+    ahiaudioid:=auid; getaudioahiattrs(ahiaudioid)
+    setmixfreq(mixfreq)
+    audio_attrs([SFX_SET_AUDIO_ID,ahiaudioid,SFX_SET_MIXFREQ,mixfreq,NIL])
+    updateaudwin(TRUE)
+  ENDIF
+ENDPROC
+
+PROC mfreqset(info,num)
+  IF freqtab
+    setmixfreq(freqtab[num])
+    setnum(saugh,agh_mxftxt,mixfreq)
+    audio_attrs([SFX_SET_MIXFREQ,mixfreq,NIL])
+  ENDIF
 ENDPROC
 
 PROC chanset(info,chan)
   maxchan:=chan-1
   maskmaxchan:=Shl(1,maxchan+1)-1
-  soundoff(Not(maskmaxchan))
+  audio_attrs([SFX_SET_CHANNELS,maxchan+1,NIL])
 ENDPROC
 
-PROC led_filt(info,bool)
-  ledbool:=IF bool THEN TRUE ELSE FALSE
-  ledchange()
+PROC applyaudio(info)
+  audio_attrs([SFX_SET_APPLYAUDIO,TRUE,NIL])
 ENDPROC
+
+/*--------------------------------- midi advanced --------------------------------*/
 
 PROC undomidi(info)
   chanflags:=mbprefs.chanflags
   msgflags:=mbprefs.msgflags
   modifyMRouteInfos(chanflags,msgflags)
-  updatesetwin()
+  updatemidiwin()
 ENDPROC
 
 PROC chk_mc1(info,check) IS modifyMRouteInfos(chanflags:=IF check THEN chanflags OR $1 ELSE chanflags AND $FFFE,msgflags)
@@ -427,6 +534,20 @@ ENDPROC
 /* ========================================================================
                            source list functions
    ======================================================================== */
+PROC modifyMRouteInfos(chnf,msgf)
+DEF i=0:REG,mr:REG
+  minfo.msgflags:=msgf AND (MMF_NOTEOFF OR MMF_NOTEON)
+  minfo.chanflags:=chnf
+  minfo.chanoffset:=0
+  minfo.noteoffset:=0
+  minfo.sysexmatch::rimatch.flags:=0
+  minfo.ctrlmatch::rimatch.flags:=0
+  IF routes
+    WHILE routes[i++]<>-1 DO IF mr:=routes[i-1] THEN ModifyMRoute(mr,minfo)
+  ENDIF
+  minfo.msgflags:=msgf
+  signal_playtask(PSG_MINFO)   -> signal play task "we've changed minfo"
+ENDPROC TRUE
 
 PROC refresh_srclist() HANDLE
 DEF mbase:PTR TO midibase,
@@ -517,5 +638,91 @@ DEF i=0:REG,mr:REG
   ENDIF
 ENDPROC
 
+/* ========================================================================
+                               ahi requester
+   ======================================================================== */
 
+PROC getaudioahimode(window) HANDLE
+DEF arequest=0:PTR TO ahiaudiomoderequester,audioid=AHI_INVALID_ID
 
+  IF (arequest:=AhI_AllocAudioRequestA([AHIR_WINDOW,window,
+     AHIR_TEXTATTR,ahitextattr,
+->       AHIR_LOCALE (struct Locale *) - Locale to use for the requesting
+     AHIR_TITLETEXT,getLocStr(STRID_AHIREQUESTER),
+     AHIR_INITIALAUDIOID,audioid,
+->     AHIR_INITIALINFOOPENED,TRUE,
+     AHIR_FILTERTAGS,[AHIDB_STEREO,TRUE,
+                      AHIDB_PANNING,TRUE,
+                      AHIDB_BITS,9,
+                      AHIB_DIZZY,[AHIDB_STEREO,TRUE,
+                                  AHIDB_PANNING,TRUE,
+                                  AHIDB_BITS,9,NIL,NIL],
+                      NIL,NIL],
+     NIL,NIL]))=NIL THEN Raise("MEM")
+  IF AhI_AudioRequestA(arequest, NIL)=FALSE
+    IF IoErr()=ERROR_NO_FREE_STORE THEN Raise("MEM") ELSE RETURN AHI_INVALID_ID
+  ENDIF    
+  audioid:=arequest.audioid
+
+EXCEPT DO
+  IF arequest THEN AhI_FreeAudioRequest(arequest)
+  IF exception
+    report_exception(); audioid:=AHI_INVALID_ID
+  ENDIF
+ENDPROC audioid
+
+PROC getaudioahiattrs(audioid) HANDLE
+DEF fnum=0,ftab:PTR TO LONG,i,f,buf[256]:ARRAY OF CHAR
+
+  IF ahi_mode_str=0 THEN ahi_mode_str:=String(10)
+  IF audioid=AHI_DEFAULT_ID
+    IF ahi_mode_str THEN StrCopy(ahi_mode_str,'DEFAULT')
+  ELSE
+    IF ahi_mode_str THEN StringF(ahi_mode_str,'0x\h',audioid)
+  ENDIF
+  AhI_GetAudioAttrsA( audioid, 0,[AHIDB_FREQUENCIES,{fnum},
+                                  NIL,NIL])
+  IF fnum>0
+    IF fnum<>freqnum
+      NEW ftab[fnum]; IF freqnum THEN END freqtab[freqnum]
+      freqtab:=ftab; freqnum:=fnum
+    ENDIF
+    FOR i:=0 TO freqnum-1
+      IF AhI_GetAudioAttrsA( audioid, 0,[AHIDB_FREQUENCYARG,i,
+                                      AHIDB_FREQUENCY,{f},NIL,NIL]) THEN freqtab[i]:=f
+    ENDFOR
+  ENDIF
+  IF ahi_driver_str THEN DisposeLink(ahi_driver_str); ahi_driver_str:=NIL
+  IF ahi_name_str THEN DisposeLink(ahi_name_str); ahi_name_str:=NIL
+  IF ahi_author_str THEN DisposeLink(ahi_author_str); ahi_author_str:=NIL
+  IF ahi_copyright_str THEN DisposeLink(ahi_copyright_str); ahi_copyright_str:=NIL
+  IF ahi_version_str THEN DisposeLink(ahi_version_str); ahi_version_str:=NIL
+  IF AhI_GetAudioAttrsA( audioid, 0,[AHIDB_BUFFERLEN,255,AHIDB_DRIVER,buf,NIL,NIL])
+    IF ahi_driver_str:=String(StrLen(buf))
+      FOR i:=0 TO StrLen(buf)-1 DO IF buf[i] < " " THEN buf[i]:=" "; StrCopy(ahi_driver_str,buf)
+    ENDIF
+  ENDIF
+  IF AhI_GetAudioAttrsA( audioid, 0,[AHIDB_BUFFERLEN,255,AHIDB_NAME,buf,NIL,NIL])
+    IF ahi_name_str:=String(StrLen(buf))
+      FOR i:=0 TO StrLen(buf)-1 DO IF buf[i] < " " THEN buf[i]:=" "; StrCopy(ahi_name_str,buf)
+    ENDIF
+  ENDIF
+  IF AhI_GetAudioAttrsA( audioid, 0,[AHIDB_BUFFERLEN,255,AHIDB_AUTHOR,buf,NIL,NIL])
+    IF ahi_author_str:=String(StrLen(buf))
+      FOR i:=0 TO StrLen(buf)-1 DO IF buf[i] < " " THEN buf[i]:=" "; StrCopy(ahi_author_str,buf)
+    ENDIF
+  ENDIF
+  IF AhI_GetAudioAttrsA( audioid, 0,[AHIDB_BUFFERLEN,255,AHIDB_COPYRIGHT,buf,NIL,NIL])
+    IF ahi_copyright_str:=String(StrLen(buf))
+      FOR i:=0 TO StrLen(buf)-1 DO IF buf[i] < " " THEN buf[i]:=" "; StrCopy(ahi_copyright_str,buf)
+    ENDIF
+  ENDIF
+  IF AhI_GetAudioAttrsA( audioid, 0,[AHIDB_BUFFERLEN,255,AHIDB_VERSION,buf,NIL,NIL])
+    IF ahi_version_str:=String(StrLen(buf))
+      FOR i:=0 TO StrLen(buf)-1 DO IF buf[i] < " " THEN buf[i]:=" "; StrCopy(ahi_version_str,buf)
+    ENDIF
+  ENDIF
+
+EXCEPT DO
+
+ENDPROC

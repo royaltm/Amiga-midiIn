@@ -8,35 +8,26 @@ feedback from the users. Please send us suggestions, bug reports and
 ideas. We want to make midiIn a professional audio application for
 Amiga - an application, which helps Amiga to be considered as a
 serious tool in sound studio system.
-   This version of midiIn is FREE. However, next version will be
-shareware. It will have lots of new features. Our todo list (I can't
-promise all of this will exist in next version - everything depends on the
-user feedback):
-
- - AHI support
+   
+What we want to do:
+^^^^^^^^^^^^^^^^^^^
+ - midiIn www homepage
  - for soundcards users: 4 channels audio output!!! (2 AHI channels
    thru soundcard, plus two Amiga hardware 14-bit channels)
- - new Mixer window with faders and panorama pots for each bank
+ - system of external DSP plug-ins (chorus, delay, filters) with
+   Developer Kit, so ANYONE can write plug-ins for midiIn!
  - Amplitude and Frequency Modulation (or tremolo and vibrato)
    controlled by Modulation Controller and LFO's syncronised to MIDI
    Clock
  - new audio level display (LED-like)
- - real-time effects like delay, chorus controlled by MIDI
  - tap tempo for easy synchronisation of drum loop samples with
    playing musicians
  - harddisk samples maybe...
- - improved Monitor window - it contains bugs now (all controllers are
-   treated as 14-bit wide)
  - more controllers in Monitor window
  - reverse sample and reverse loop
+ - scratching (almost ready!)
  - Preview Mode for quick scan thru the Instrument List (clilck&hear)
- - intelligent AddProject function
+ - much better (intelligent) AddProject function
  - faster response to MIDI messages
- - portamento (glide) in Mono mode
+ - new Mixer window with faders and panorama pots for each bank
  - whatever You want ;)
-
-
-Please don't send us complains about sound quality. The next
-versions of midiIn will use AHI for mixing and playback, so we will
-not work on audio routines, rather concentrate on using AHI.
-

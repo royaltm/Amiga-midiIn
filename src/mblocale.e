@@ -1,6 +1,6 @@
 OPT MODULE
 
-MODULE 'locale'
+MODULE 'locale','utility'
 
 EXPORT DEF catalog
 
@@ -12,15 +12,21 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_WAVENAME,
             STRID_LOOKINGFORSAMPLE,
             STRID_LOADINGSAMPLE,
-            STRID_RELOADINGINSTR,
             STRID_CHOOSEANOTHERSAMPLE,
-            STRID_INITINSTRUMENTS,
             STRID_MIDIINSCOPE,
+            STRID_MIDIINADVANCEDAUDIO,
             STRID_MIDIINADVANCED,
-            STRID_DMA,
+            STRID_AHIMODE,
+            STRID_MFREQ,
             STRID_CHANPOLY,
             STRID_UNDO,
-            STRID_LEDFILTER,
+            STRID_APPLY,
+            STRID_AHIAUDIOINFO,
+            STRID_AHIINFONAME,
+            STRID_AHIINFODRIVER,
+            STRID_AHIINFOAUTHOR,
+            STRID_AHIINFOVERSION,
+            STRID_AHIINFOCOPYRIGHT,
             STRID_MIDIMESANDCHAN,
             STRID_NOTEOFF,
             STRID_NOTEON,
@@ -60,6 +66,9 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_ONON,
             STRID_DRUM,
             STRID_GROUP,
+            STRID_MONOVSENS,
+            STRID_MONOSLIDE,
+            STRID_OFF,
             STRID_MONOPHONIC,
             STRID_LOOP,
             STRID_SET,
@@ -83,15 +92,24 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_COPY,
             STRID_PASTE,
             STRID_MENUDELETE,
+            STRID_MENUSORT,
+            STRID_MENUSORTPRI,
+            STRID_MENUSORTMIDI,
+            STRID_MENUSORTNAME,
+            STRID_MENUSORTRANGE,
+            STRID_MENUUNDO,
+            STRID_MENUREDO,
             STRID_SETTINGS,
             STRID_AUDIOENABLE,
             STRID_MENUMIDICTRL,
             STRID_MENUFOLLOW,
-            STRID_ADVANCED,
+            STRID_ADVANCEDMIDI,
+            STRID_ADVANCEDAUDIO,
             STRID_SAVESETTINGS,
             STRID_MENUSETLAYOUT,
             STRID_MENUSETWITHPROJECTS,
             STRID_MENUSETSAVEICONS,
+            STRID_MENUSETSAVEUNDO,
             STRID_WINDOWS,
             STRID_MENUMAIN,
             STRID_MENUVOLUME,
@@ -111,6 +129,7 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_MAXVOLUME,
             STRID_VELOCITY,
             STRID_AFTERTOUCH,
+            STRID_SUBAFTERT,
             STRID_AFTERVEL,
             STRID_PANORAMA,
             STRID_WIDE,
@@ -131,12 +150,14 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_CANCEL,
             STRID_REQUEST,
             STRID_OVERORSKIP,
+            STRID_NOTTOUNDO,
+            STRID_NOTTOREDO,
             STRID_OVERWRITE,
             STRID_SKIPOVER,
             STRID_MERGEDONTFIT,
             STRID_CONTINUE,
             STRID_UNSAVED,
-            STRID_LOOSE,
+            STRID_LOSE,
             STRID_BACK,
             STRID_QUESTION,
             STRID_SUREQUIT,
@@ -151,6 +172,7 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_NOTINTERCHANGEFF,
             STRID_IFFMANGLED,
             STRID_WRITEERROR,
+            STRID_SETRANGEFIRST,
             STRID_POPKEYERROR,
             STRID_BADPROJECT,
             STRID_AUDIOERROR,
@@ -187,6 +209,53 @@ EXPORT ENUM STRID_MIDIIN,
             STRID_MIDIPAN,
             STRID_MIDIPITCHBEND,
             STRID_NOTAVAILABLE,
+            STRID_PROJECTSUMMARY,
+            STRID_PROJECTNAME,
+            STRID_ACTIVEBANKS,
+            STRID_SAMPLESINLIST,
+            STRID_SAMPLESINMEMORY,
+            STRID_TOTALLENGTH,
+            STRID_BYTES,
+            STRID_FREEMEMORY,
+            STRID_FAST,
+            STRID_LARGEST,
+            STRID_CHIP,
+            STRID_DATASIZE,
+            STRID_UNDOMEMLEFT,
+            STRID_RUNTIME,
+            STRID_SET_SAMPLELIST,
+            STRID_SET_ALL,
+            STRID_SET_BANKS,
+            STRID_SET_XCHGBANKS,
+            STRID_SET_SAMPLEDELETE,
+            STRID_SET_INSTR,
+            STRID_SET_MIDI,
+            STRID_SET_PRI,
+            STRID_SET_BASE,
+            STRID_SET_FINE,
+            STRID_SET_SET_LOOP,
+            STRID_SET_SET_DUR,
+            STRID_SET_SET_MONO,
+            STRID_SET_SET_ADDAFTERT,
+            STRID_SET_BOUNDS,
+            STRID_SET_VOLUME,
+            STRID_SET_VELSENS,
+            STRID_SET_RELEASE,
+            STRID_SET_PANORAMA,
+            STRID_SET_PANWIDE,
+            STRID_SET_PITCHSENS,
+            STRID_SET_ATTACK,
+            STRID_SET_DECAY,
+            STRID_SET_SUSTAINLEV,
+            STRID_SET_AFTERSENS,
+            STRID_SET_FIRSTSKIP,
+            STRID_SET_MCTRLVOL,
+            STRID_SET_MCTRLPAN,
+            STRID_SET_GROUP,
+            STRID_SET_MONOVSENS,
+            STRID_SET_MONOSLIDE,
+            STRID_AHIREQUESTER,
+            STRID_MAINUNDO,
             STRID_MAX
 
 
@@ -200,15 +269,21 @@ DEF strings:PTR TO LONG,ret,i
             'WAVE RIFF file', ->  STRID_WAVENAME
             'Looking for instrument...', -> STRID_LOOKINGFORSAMPLE
             'Loading instrument...',     -> STRID_LOADINGSAMPLE
-            'Reloading instruments...', -> STRID_RELOADINGINSTR
             'Choose another instrument file', -> STRID_CHOOSEANOTHERSAMPLE
-            'Initialising instruments...', -> STRID_INITINSTRUMENTS
             'midiIn scope window', -> STRID_MIDIINSCOPE
+            'midiIn ahi settings', -> STRID_MIDIINADVANCEDAUDIO
             'midiIn advanced settings', -> STRID_MIDIINADVANCED
-            '_Mix freq', -> STRID_DMA
+            'A_hi ID', -> STRID_AHIMODE
+            '_Mix freq', -> STRID_MFREQ
             'Max _polyphony:     ', -> STRID_CHANPOLY
-            'Undo', -> STRID_UNDO
-            '_Led/Filter', -> STRID_LEDFILTER
+            '_Undo', -> STRID_UNDO
+            '_Apply', -> STRID_APPLY
+            'Ahi Info', -> STRID_AHIAUDIOINFO
+            'Name', -> STRID_AHIINFONAME
+            'Driver', -> STRID_AHIINFODRIVER
+            'Author', -> STRID_AHIINFOAUTHOR
+            'Version', -> STRID_AHIINFOVERSION
+            '(c)', -> STRID_AHIINFOCOPYRIGHT
             'midi messages and channels', -> STRID_MIDIMESANDCHAN
             'Note Off', -> STRID_NOTEOFF
             'Note On', -> STRID_NOTEON
@@ -239,22 +314,25 @@ DEF strings:PTR TO LONG,ret,i
             'Audio', -> STRID_AUDIO
             '_Midi', -> STRID_MIDICTRL
             'Instrument:', -> STRID_INSTRUMENT
-            '_Free', -> STRID_FREE
+            'Free', -> STRID_FREE
             'M_idi channel:   ', -> STRID_MIDICHAN
             '_Reload', -> STRID_RELOAD
             'Bank priority:    ', -> STRID_BANKPRIORITY
-            '_duration', -> STRID_DURATION
+            '_dur.', -> STRID_DURATION
             'ON->OFF', -> STRID_ONOFF
             'ON->ON', -> STRID_ONON
             'DRUM', -> STRID_DRUM
-            'Mute _group:     ', -> STRID_GROUP
+            'Mute _gr.   ', -> STRID_GROUP
+            '_Velocity:     ', -> STRID_MONOVSENS
+            '_Portamento', -> STRID_MONOSLIDE
+            'Off', -> STRID_OFF
             'Mo_no', -> STRID_MONOPHONIC
             '_Loop', -> STRID_LOOP
-            '_SET', -> STRID_SET
+            '_Set', -> STRID_SET
             'Base', -> STRID_BASE
-            'Fine:      ', -> STRID_FINE
-            'Clear', -> STRID_CLEAR
-            'Add', -> STRID_ADD
+            'Fine:', -> STRID_FINE
+            '_Clear', -> STRID_CLEAR
+            '_Add', -> STRID_ADD
             'Delete', -> STRID_DELETE
             'Project', -> STRID_MENUPROJECT
             'N\0New', -> STRID_MENUNEW
@@ -271,15 +349,24 @@ DEF strings:PTR TO LONG,ret,i
             'C\0Copy', -> STRID_COPY
             'V\0Paste', -> STRID_PASTE
             'X\0Delete', -> STRID_MENUDELETE
+            'Sort by', -> STRID_MENUSORT
+            'bank priority', -> STRID_MENUSORTPRI
+            'MIDI channel', -> STRID_MENUSORTMIDI
+            'instrument', -> STRID_MENUSORTNAME
+            'range', -> STRID_MENUSORTRANGE
+            'U\0Undo', -> STRID_MENUUNDO,
+            'Z\0Redo', -> STRID_MENUREDO,
             'Settings', -> STRID_SETTINGS
             'A\0Audio enable', -> STRID_AUDIOENABLE
             'M\0MIDI control', -> STRID_MENUMIDICTRL
             'F\0Follow mode', -> STRID_MENUFOLLOW
-            'P\0Advanced...', -> STRID_ADVANCED
+            'P\0Midi Advanced...', -> STRID_ADVANCEDMIDI
+            'D\0Audio...', -> STRID_ADVANCEDAUDIO
             'Save defaults', -> STRID_SAVESETTINGS
             'L\0Save layout?', -> STRID_MENUSETLAYOUT
             ';\0Load with projects?', -> STRID_MENUSETWITHPROJECTS
             'Save icons?', -> STRID_MENUSETSAVEICONS
+            'Save undo history?', -> STRID_MENUSETSAVEUNDO
             'Windows', -> STRID_WINDOWS
             '1\0Main', -> STRID_MENUMAIN
             '2\0Details', -> STRID_MENUVOLUME
@@ -299,8 +386,9 @@ DEF strings:PTR TO LONG,ret,i
             '_Max', -> STRID_MAXVOLUME
             'Ve_locity:     ', -> STRID_VELOCITY
             'Af_tertouch:     ', -> STRID_AFTERTOUCH
+            'Su_b', -> STRID_SUBAFTERT
             '_Same', -> STRID_AFTERVEL
-            '_Panorama:      ', -> STRID_PANORAMA
+            '_Panorama:', -> STRID_PANORAMA
             '_Autopan:     ', -> STRID_WIDE
             '_Center', -> STRID_CENTER
             'midi Vol_ume', -> STRID_MCTRLVOL
@@ -319,12 +407,14 @@ DEF strings:PTR TO LONG,ret,i
             'Cancel', -> STRID_CANCEL
             'request', -> STRID_REQUEST
             'Some existing active banks\ncould be overlapped!\nPlease select the course of action:', -> STRID_OVERORSKIP
+            'Nothing to Undo', -> STRID_NOTTOUNDO
+            'Nothing to Redo', -> STRID_NOTTOREDO
             'Overlap', -> STRID_OVERWRITE
             'Skip over', -> STRID_SKIPOVER
             'There are too many active banks\nin project being added!\n(\d of them will be cut off)', -> STRID_MERGEDONTFIT
             'Continue', -> STRID_CONTINUE
-            'Current project is unsaved!\nAre U sure you want to loose it?', -> STRID_UNSAVED
-            'Loose', -> STRID_LOOSE
+            'Current project is unsaved!\nAre U sure you want to lose it?', -> STRID_UNSAVED
+            'Lose', -> STRID_LOSE
             'Back', -> STRID_BACK
             'question', -> STRID_QUESTION
             'Are U sure you want to exit?', -> STRID_SUREQUIT
@@ -339,9 +429,10 @@ DEF strings:PTR TO LONG,ret,i
             'Not an Interchange File Format!\n(no "FORM" chunk)', -> STRID_NOTINTERCHANGEFF
             'Iffparse error or IFF file mangled!', -> STRID_IFFMANGLED
             'Error while writing to file!\n(BAD disk?)', -> STRID_WRITEERROR
+            'Set range over more than one bank!', -> STRID_SETRANGEFIRST
             'Wrong CX_POPKEY argument!\n\q\s\q', -> STRID_POPKEYERROR
             'Bad project data!',  -> STRID_BADPROJECT
-            'Audio busy!\nCheck other programs that are\nusing audio device!', -> STRID_AUDIOERROR
+            'Can''t allocate AHI!\nCheck other programs that are\nusing audio!', -> STRID_AUDIOERROR
             'The file contains no common chunk!\n(is not an Audio IFF)', -> STRID_NOCOMMONERROR
             'The file contains no audio header!\n(is not an IFF 8SVX)', -> STRID_NOAHDRERROR
             'Unknown sound file type!', -> STRID_UNKNOWNSOUNDFILE
@@ -375,6 +466,53 @@ DEF strings:PTR TO LONG,ret,i
             'Pan', -> STRID_MIDIPAN
             'Pitchbend', -> STRID_MIDIPITCHBEND
             'N.A.', -> STRID_NOTAVAILABLE
+            'project summary', -> STRID_PROJECTSUMMARY
+            'Project name:', -> STRID_PROJECTNAME
+            'Active banks:', -> STRID_ACTIVEBANKS
+            'Samples in list:', -> STRID_SAMPLESINLIST
+            'Samples in memory:', -> STRID_SAMPLESINMEMORY
+            'total length:',-> STRID_TOTALLENGTH
+            'bytes', -> STRID_BYTES
+            'free memory', -> STRID_FREEMEMORY
+            'Fast:', -> STRID_FAST
+            'largest:', -> STRID_LARGEST
+            'Chip:', -> STRID_CHIP
+            'Data size:', -> STRID_DATASIZE
+            'Undo memory left:', -> STRID_UNDOMEMLEFT
+            'Run time:', -> STRID_RUNTIME
+            'instruments', -> STRID_SET_SAMPLELIST
+            'paste banks', -> STRID_SET_ALL
+            'delete banks', -> STRID_SET_BANKS
+            'exchange banks', -> STRID_SET_XCHGBANKS
+            'delete instrument', -> STRID_SET_SAMPLEDELETE
+            'instrument', -> STRID_SET_INSTR
+            'midi', -> STRID_SET_MIDI
+            'priority', -> STRID_SET_PRI
+            'base', -> STRID_SET_BASE
+            'fine', -> STRID_SET_FINE
+            'loop', -> STRID_SET_SET_LOOP
+            'duration', -> STRID_SET_SET_DUR
+            'mono', -> STRID_SET_SET_MONO
+            'sub aftertouch', -> STRID_SET_SET_ADDAFTERT
+            'key range', -> STRID_SET_BOUNDS
+            'volume', -> STRID_SET_VOLUME
+            'velocity', -> STRID_SET_VELSENS
+            'release', -> STRID_SET_RELEASE
+            'panorama', -> STRID_SET_PANORAMA
+            'autopan', -> STRID_SET_PANWIDE
+            'pitch bender', -> STRID_SET_PITCHSENS
+            'attack', -> STRID_SET_ATTACK
+            'decay', -> STRID_SET_DECAY
+            'sustain', -> STRID_SET_SUSTAINLEV
+            'aftertouch', -> STRID_SET_AFTERSENS
+            'offset', -> STRID_SET_FIRSTSKIP
+            'midi volume', -> STRID_SET_MCTRLVOL
+            'midi pan', -> STRID_SET_MCTRLPAN
+            'mute group', -> STRID_SET_GROUP
+            'portamento velocity', -> STRID_SET_MONOVSENS
+            'portamento', -> STRID_SET_MONOSLIDE
+            'Choose ahi mode', -> STRID_AHIREQUESTER
+            'Undo', -> STRID_MAINUNDO
             '']
 
   IF id=STRID_MIDIIN THEN RETURN strings[id]
@@ -389,7 +527,7 @@ DEF strings:PTR TO LONG,ret,i
         ^gadchar:=0
       ELSE
         i:=ret[i+1]
-        IF (i>="A") AND (i<="Z") THEN i:=i OR $20
+        i:=ToLower(i)
         ^gadchar:=i
       ENDIF
     ENDIF

@@ -2,17 +2,24 @@ OPT MODULE
 OPT OSVERSION=37
 
 MODULE 'intuition/intuition','tools/arq','reqtools','tools/EasyGUI',
-       'midi','exec/memory','exec/nodes','*mblocale','*mbabout'
+       'midi','exec/memory','exec/nodes','*mblocale','*mbabout','*mbprogressbar'
 
 EXPORT DEF cxhotkey -> hotkey txt to display
 EXPORT DEF dest -> midi dest to flush
-EXPORT DEF mh:PTR TO multihandle,  gh:PTR TO guihandle, 
-           setgh:PTR TO guihandle, scopegh:PTR TO guihandle,
-           volgh:PTR TO guihandle, envgh:PTR TO guihandle,
-           mongh:PTR TO guihandle
-DEF statgh:PTR TO guihandle, 
+EXPORT DEF mh:PTR TO multihandle,
+           gh:PTR TO guihandle,       -> main window
+           volgh:PTR TO guihandle,    -> volume
+           envgh:PTR TO guihandle,    -> envelope
+           scopegh:PTR TO guihandle,  -> scope
+           mongh:PTR TO guihandle,    -> midimonitor
+           setgh:PTR TO guihandle,    -> midi settings
+           saugh:PTR TO guihandle     -> audio settings
+
+DEF statgh:PTR TO guihandle, prsbar:PTR TO progressbar,
     aboutgh:PTR TO guihandle, aboutpict:PTR TO aboutpicture
-DEF statgd_stat,statgd_info,statgd_type -> status text gadgets
+DEF statgd_stat -> status text gadgets
+DEF lasttxt -> last txt for statgd
+DEF winblocked        -> boolean TRUE=windows are blocked
 
 PROC doreq(text,gadget,animID,title)
 DEF result, eestruct:exteasystruct,mytitle[50]:STRING
@@ -37,32 +44,50 @@ DEF result, eestruct:exteasystruct,mytitle[50]:STRING
     eestruct.easy.gadgetformat := gadget
 
 
-    IF gh THEN IF gh.wnd THEN blockwin(gh)
-    IF setgh THEN IF setgh.wnd THEN blockwin(setgh)
-    IF volgh THEN IF volgh.wnd THEN blockwin(volgh)
-    IF envgh THEN IF envgh.wnd THEN blockwin(envgh)
-    IF scopegh THEN IF scopegh.wnd THEN blockwin(scopegh)
-    IF mongh THEN IF mongh.wnd THEN blockwin(mongh)
+    blockallwindows()
     result := EasyRequestArgs( NIL, eestruct.easy, NIL, NIL )
-    IF gh THEN IF gh.wnd THEN unblockwin(gh)
-    IF setgh THEN IF setgh.wnd THEN unblockwin(setgh)
-    IF volgh THEN IF volgh.wnd THEN unblockwin(volgh)
-    IF envgh THEN IF envgh.wnd THEN unblockwin(envgh)
-    IF scopegh
-      IF scopegh.wnd
-        unblockwin(scopegh)
-        ModifyIDCMP(scopegh.wnd,scopegh.wnd.idcmpflags OR IDCMP_SIZEVERIFY)
-      ENDIF
-    ENDIF
-    IF mongh THEN IF mongh.wnd THEN unblockwin(mongh)
-    IF dest THEN FlushMDest(dest)   -> flush midi dest lockwin was too long
+    unblockallwindows()
 
 ENDPROC result
+
+EXPORT PROC blockallwindows()
+  winblocked:=winblocked+1
+  IF winblocked > 1 THEN RETURN
+  IF gh THEN IF gh.wnd THEN blockwin(gh)
+  IF setgh THEN IF setgh.wnd THEN blockwin(setgh)
+  IF saugh THEN IF saugh.wnd THEN blockwin(saugh)
+  IF volgh THEN IF volgh.wnd THEN blockwin(volgh)
+  IF envgh THEN IF envgh.wnd THEN blockwin(envgh)
+  IF scopegh THEN IF scopegh.wnd THEN blockwin(scopegh)
+  IF mongh THEN IF mongh.wnd THEN blockwin(mongh)
+ENDPROC
+
+EXPORT PROC unblockallwindows()
+  IF winblocked <= 0 THEN RETURN
+  winblocked:=winblocked-1
+  IF winblocked > 0 THEN RETURN
+  IF gh THEN IF gh.wnd THEN unblockwin(gh)
+  IF setgh THEN IF setgh.wnd THEN unblockwin(setgh)
+  IF saugh THEN IF saugh.wnd THEN unblockwin(saugh)
+  IF volgh THEN IF volgh.wnd THEN unblockwin(volgh)
+  IF envgh THEN IF envgh.wnd THEN unblockwin(envgh)
+  IF scopegh
+    IF scopegh.wnd
+      unblockwin(scopegh)
+      ModifyIDCMP(scopegh.wnd,scopegh.wnd.idcmpflags OR IDCMP_SIZEVERIFY)
+    ENDIF
+  ENDIF
+  IF mongh THEN IF mongh.wnd THEN unblockwin(mongh)
+  IF dest THEN FlushMDest(dest)   -> flush midi dest lockwin was too long
+ENDPROC
 
 EXPORT PROC reqclear()
 DEF s[60]:STRING
   StringF(s,'\s|\s|\s',getLocStr(STRID_UNUSED),getLocStr(STRID_ALL),getLocStr(STRID_CANCEL))
 ENDPROC doreq(getLocStr(STRID_AREUSURE),s,ARQ_ID_DELETE,getLocStr(STRID_REQUEST))
+
+EXPORT PROC reqnotundo() IS doreq(getLocStr(STRID_NOTTOUNDO),getLocStr(STRID_CONTINUE),ARQ_ID_EXCLAM,getLocStr(STRID_TROUBLE))
+EXPORT PROC reqnotredo() IS doreq(getLocStr(STRID_NOTTOREDO),getLocStr(STRID_CONTINUE),ARQ_ID_EXCLAM,getLocStr(STRID_TROUBLE))
 
 EXPORT PROC reqskipover()
 DEF s[60]:STRING
@@ -77,7 +102,7 @@ ENDPROC doreq(t,s,ARQ_ID_DELETE,getLocStr(STRID_REQUEST))
 
 EXPORT PROC reqquit()
 DEF s[50]:STRING
-  StringF(s,'\s|\s',getLocStr(STRID_LOOSE),getLocStr(STRID_BACK))
+  StringF(s,'\s|\s',getLocStr(STRID_LOSE),getLocStr(STRID_BACK))
 ENDPROC doreq(getLocStr(STRID_UNSAVED),s,ARQ_ID_QUESTION,getLocStr(STRID_QUESTION))
 
 EXPORT PROC reqexit()
@@ -115,6 +140,7 @@ DEF s[80]:STRING,e[5]:ARRAY
         StrCopy(s,getLocStr(STRID_WRITEERROR))
       ELSE
         SELECT exception
+          CASE "RNGE";  StringF(s,getLocStr(STRID_SETRANGEFIRST))
           CASE "CXER";  StringF(s,getLocStr(STRID_POPKEYERROR),cxhotkey)
           CASE "bprj";  StrCopy(s,getLocStr(STRID_BADPROJECT))
           CASE "AUDB";  StrCopy(s,getLocStr(STRID_AUDIOERROR))
@@ -149,7 +175,7 @@ DEF s[80]:STRING,e[5]:ARRAY
   ENDIF
 ENDPROC
 
-EXPORT PROC reqsumm(n,a,b,c,d,t)
+EXPORT PROC reqsumm(n,a,b,c,d,t,usl)
 DEF s[400]:STRING,
     m[50]:STRING,ds[15]:STRING,es[15]:STRING,data:PTR TO LONG,node:PTR TO mln,count=0
 
@@ -159,19 +185,28 @@ DEF s[400]:STRING,
     WHILE node.succ ; count:=count+node.pred ; node:=node.succ; ENDWHILE
   ENDIF
 
-  StringF(s,'Project name: \q\s\q\n\nActive banks: \d\nSamples in list: \d\nSamples in memory: \d\ntotal length: \s bytes\n',n,a,b,c,dotnum(d,ds))
+  StringF(s,'\s \q\s\q\n\n\s \d\n\s \d\n\s \d\n\s \s \s\n',
+    getLocStr(STRID_PROJECTNAME),n,
+    getLocStr(STRID_ACTIVEBANKS),a,
+    getLocStr(STRID_SAMPLESINLIST),b,
+    getLocStr(STRID_SAMPLESINMEMORY),c,
+    getLocStr(STRID_TOTALLENGTH),dotnum(d,ds),
+    getLocStr(STRID_BYTES))
 
-  StrAdd(s,'\n * free memory\n')
-  StringF(m,'Fast: \s  largest: \s bytes\n',dotnum(AvailMem(MEMF_FAST),ds),dotnum(AvailMem(MEMF_FAST OR MEMF_LARGEST),es))
+  StringF(m,'\n * \s\n',getLocStr(STRID_FREEMEMORY))
   StrAdd(s,m)
-  StringF(m,'Chip: \s  largest: \s bytes\n',dotnum(AvailMem(MEMF_CHIP),ds),dotnum(AvailMem(MEMF_CHIP OR MEMF_LARGEST),es))
+  StringF(m,'\s \s  \s \s \s\n',getLocStr(STRID_FAST),dotnum(AvailMem(MEMF_FAST),ds),getLocStr(STRID_LARGEST),dotnum(AvailMem(MEMF_FAST OR MEMF_LARGEST),es),getLocStr(STRID_BYTES))
   StrAdd(s,m)
-  StringF(m,'\nData size: \s bytes\n',dotnum(count,ds))
+  StringF(m,'\s \s  \s \s \s\n',getLocStr(STRID_CHIP),dotnum(AvailMem(MEMF_CHIP),ds),getLocStr(STRID_LARGEST),dotnum(AvailMem(MEMF_CHIP OR MEMF_LARGEST),es),getLocStr(STRID_BYTES))
   StrAdd(s,m)
-  StringF(m,'\nRun time: \d:\z\d[2]:\z\d[2] seconds',t/3600,Mod(Div(t,60),60),Mod(t,60))
+  StringF(m,'\n\s \s \s\n',getLocStr(STRID_DATASIZE),dotnum(count,ds),getLocStr(STRID_BYTES))
+  StrAdd(s,m)
+  StringF(m,'\n\s \d \s\n',getLocStr(STRID_UNDOMEMLEFT),usl,getLocStr(STRID_BYTES))
+  StrAdd(s,m)
+  StringF(m,'\n\s \d:\z\d[2]:\z\d[2] \s',getLocStr(STRID_RUNTIME),t/3600,Mod(Div(t,60),60),Mod(t,60),getLocStr(STRID_SECONDS))
   StrAdd(s,m)
 
-  doreq(s,'OK',ARQ_ID_INFO,'project summary')
+  doreq(s,'OK',ARQ_ID_INFO,getLocStr(STRID_PROJECTSUMMARY))
 
 ENDPROC
 
@@ -189,26 +224,21 @@ DEF m[11]:STRING,n[20]:ARRAY OF CHAR,x,l,i,max
   StrCopy(s,n)
 ENDPROC s
 
-EXPORT PROC string_info()
-DEF b=2,s,st[10]:STRING,a=3,dot=46,c=0
-  StringF(st,'\d\d\c\d\db',a,b,dot,c,b+12)
-  s:='$VER:midiIn 32.014 (24.11.98)  (c) by Najakotiva Software 1997-98'
-  CopyMem(st,s+12,EstrLen(st))
-ENDPROC s+5
+EXPORT PROC string_info() IS {versionstr}+5
+
+versionstr: INCBIN 'version.bin'
+CHAR 0
 
 /* =======================================================================
                               status window
    ======================================================================= */
 
-EXPORT PROC open_status(screen,ta)
+EXPORT PROC open_status(screen,ta,font)
 
   statgh:=addmultiA(mh,'',
     [EQROWS,
-      statgd_stat:=[TEXT,'','midiIn:',FALSE,28],
-      [COLS,
-        statgd_info:=[TEXT,'',NIL,TRUE,14],
-        statgd_type:=[TEXT,'',NIL,TRUE,10]
-      ]
+      statgd_stat:=[TEXT,'','midiIn:',FALSE,25],
+      [BEVELR,[PLUGIN,0 ,NEW prsbar.init(screen,font),FALSE,NIL]]
     ],
       [EG_CLEAN,  {clean_status},
        EG_WTYPE, WTYPE_BASIC,
@@ -218,6 +248,7 @@ EXPORT PROC open_status(screen,ta)
        0,0])
 
 ENDPROC
+
 
 PROC clean_status()
   statgh:=0
@@ -230,12 +261,15 @@ EXPORT PROC closestatus()
   ENDIF
 ENDPROC
 
-EXPORT PROC printstatus(statustext,infotext,typetext) HANDLE
-
-  IF statgh.wnd=0 THEN openwin(statgh)
-  IF statustext THEN settext(statgh,statgd_stat,statustext)
-  IF infotext THEN settext(statgh,statgd_info,infotext)
-  IF typetext THEN settext(statgh,statgd_type,typetext)
+EXPORT PROC printstatus(statustext,infotext,typetext,progrs=0,full=0) HANDLE
+  IF statgh.wnd=0
+    prsbar.settext(infotext,typetext,0,1);  openwin(statgh)
+  ENDIF
+  IF statustext
+    IF statustext<>lasttxt THEN settext(statgh,statgd_stat,statustext)
+    lasttxt:=statustext
+  ENDIF
+  prsbar.settext(infotext,typetext,progrs,full)
 
 EXCEPT
   RETURN FALSE

@@ -3,7 +3,7 @@ OPT MODULE
 
 MODULE 'tools/EasyGUI','intuition/intuition','graphics/text','intuition/screens',
        'amigalib/tasks','other/ecode','exec/semaphores','graphics/view','*mbsetup',
-       '*mbdiskoper','*soundfx','*MBLocale','*mbkeycod'
+       '*mbdiskoper','*soundfx_ahi','*MBLocale','*mbkeycod'
 
 
 OBJECT scope OF plugin
@@ -50,15 +50,12 @@ DEF scopecode,window:PTR TO window
        EG_SCRN, screen,
        EG_TOP, mbprefs.scopewiny,
        EG_LEFT, mbprefs.scopewinx,
+       EG_WIDTH,mbprefs.scopewinw,
+       EG_HEIGHT,mbprefs.scopewinh,
        EG_FONT, ta,
        0,0])
 
   IF window:=scopegh.wnd
-    IF mbprefs.scopewinw <> -1
-      IF (mbprefs.scopewinw <> window.width) OR (mbprefs.scopewinh <> window.height)
-        sizewin(scopegh,mbprefs.scopewinw,mbprefs.scopewinh)
-      ENDIF
-    ENDIF
     ModifyIDCMP(window,window.idcmpflags OR IDCMP_SIZEVERIFY)
     SetWindowTitles(window,-1,mainbartext)
   ENDIF

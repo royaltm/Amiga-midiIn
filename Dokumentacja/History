@@ -5,15 +5,57 @@
    There were lots of beta versions I got from Royal for testing and
 every next version was better. This one is the best.
 
-Revision: 32.11 BETA
-Date: Thu Jun 11 19:52:27 1998
+Revision: 32.19 BETA
+Date: Sun May  9 18:49:54 1999
+ - bugfix: loading projects (bank data used for portamento was not cleared in previous versions because was not used)
+ - bugfix: swap audiochannels
+ - bugfix: loading projects (ahi_id contained random data)
 
- - added workbench icon support for projects
+Revision: 32.18 BETA
+Date: Sun May  9 17:23:57 1999
 
-Date: Mon Jun 22 00:29:06 1998
+ - locale friendly sample list (any case supported)
+ - minor modyfication to EasyGUI module (now one can setup window with custom size)
+ - added monophonic effects (portamento and portamento velocity)
+ - improved keyboard and leds gfx (tnx Salty)
+ - AHI version with internal (NEW & FASTER) mixing routines
+ - bugfix: some 8svx samples with invalid header could be read with length=0
 
- - added support for different way of changing envelope
- - changed "Channels:" to "Max polyphony:" in window: Advanced
+Revision: 32.17 BETA
+Date: Sat Jan 16 23:32:14 1999
+
+ - bugfix: aftertouch additive didn't work
+ - gadget displaying nearest undo action
+ - some graphics layout enhancements
+ - some keyboard shortcut changes
+ - bugfix: progress bar caused enforcer hit while running first time
+
+Revision: 32.16 BETA
+Date: Fri Jan  8 00:45:00 1999
+
+ - undo/redo engine started
+ - rewritten all bank operation procedures
+ - now one can set range instead of one bank
+ - range copy/paste/delete/exchange
+ - sorting banks
+ - added progress bar for loading samples
+
+Revision: 32.15 BETA (released)
+Date: Fri Nov 27 00:53:05 1998
+
+ - aftertouch new sub/add switch
+
+Revision: 32.14 BETA (released)
+Date: Tue Nov 17 23:00:46 1998
+
+ - improved "add project"
+ - some reorganization in program structure
+
+Revision: 32.13 BETA
+Date: Tue Nov 16 02:00:23 1998
+
+ - rewritten edit range handler procedures in pianokeys object
+ - added better way of making one key range banks
 
 Revision: 32.12 BETA
 Date: Tue Jun 23 23:13:05 1998
@@ -21,15 +63,9 @@ Date: Tue Jun 23 23:13:05 1998
  - added monophonic function
  - added exclusive group option
 
-Revision: 32.14 BETA
-Date: Tue Nov 16 02:00:23 1998
+Revision: 32.11 BETA
+Date: Thu Jun 11 19:52:27 1998
 
- - rewritten edit range handler procedures in pianokeys object
- - added better way of making one key range banks
-
-Revision: 32.14 BETA
-Date: Tue Nov 17 23:00:46 1998
-
- - improved "add project"
- - some reorganization in program structure
-
+ - added workbench icon support for projects
+ - added support for different way of changing envelope
+ - changed "Channels:" to "Max polyphony:" in window: Advanced

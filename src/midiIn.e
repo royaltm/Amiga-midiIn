@@ -1,4 +1,4 @@
-/* MidiIn 32.014b in progress by Royal 98 */
+/* MidiIn 32.020b in progress by Royal 98 */
 
 OPT LARGE
 OPT OSVERSION=37
@@ -6,12 +6,13 @@ OPT PREPROCESS
 MODULE 'tools/EasyGUI', 'intuition/intuition','layers',
        'exec/lists','exec/nodes','exec/ports','exec/semaphores',
        'dos/dos','workbench/startup','workbench/workbench','icon',
-       '*mbgui','*midibplists','*soundfx','*mbreport','*mbdiskoper',
+       '*mbgui','*midibplists','*soundfx_ahi','*mbreport','*mbdiskoper',
        '*mbbanks','*mbsetup','*mbplay','*mbleds','*mbwindow','*mbscopes',
+       '*mbundo',
        'libraries/midi','midi',
         'amigalib/tasks','other/ecode',
         'mathieeedoubbas',
-        'commodities','libraries/commodities',
+        'commodities','libraries/commodities','utility',
         'locale','*mblocale',
         'diskfont','graphics/text',
         'devices/timer','exec/io'
@@ -19,8 +20,7 @@ MODULE 'tools/EasyGUI', 'intuition/intuition','layers',
 
 
 DEF timestart,dummy  -> global work time
-DEF bd[NUMBANKS]:ARRAY OF bank, cpbn:bank, cpnm[256]:STRING  -> bank's and clipbank data
-DEF nbank=0                                                 ->current bank num.
+DEF bd[NUMBANKS]:ARRAY OF bank
 DEF prilist[NUMBANKS]:ARRAY OF LONG                         ->list of bank pri sorted
 DEF keybchannels          -> which channel on which keyboard key
     -> ^^^  data 4 pianokeys: for other bank ranges & playing (active) pianokeys
@@ -28,7 +28,8 @@ DEF keybchannels          -> which channel on which keyboard key
 DEF smplist:lh       -> exec list for initialised samples
 
 DEF mainbartext         -> default strings for main window (const)
-DEF instrumenttext[32]:STRING,timetext[16]:STRING,wintext[80]:STRING  -> strings for sample list & window title
+DEF instrumenttext[32]:STRING,timetext[16]:STRING,wintext[80]:STRING,
+    monosliderstr[20]:STRING   -> strings for sample list & window's gadgets
 DEF sndpath[256]:STRING,prjpath[256]:STRING,prjname[32]:STRING
     -> ^^^ path for samples, projects, current project name, midisource name (eg. "MidiIn")
 DEF mysrclist:lh  -> exec list for my source listview
@@ -65,7 +66,7 @@ DEF res=-1,mid=-1,a,b,sigmidi,sigwnd,cxsigflag,sigtime,signal,type,mmsg,
     timermp=0:PTR TO mp,timereq=0:PTR TO timerequest
 
   newlist(smplist)  -> this must be the first thing!!!
-  initbanks(cpbn)
+  initbanks(bd)
   keybchannels:=[255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
                  255,255,255,255,255,255,255,255,255,255,255,255]:CHAR
   mh:=multiinit()
@@ -74,6 +75,7 @@ DEF res=-1,mid=-1,a,b,sigmidi,sigwnd,cxsigflag,sigtime,signal,type,mmsg,
   localebase:=OpenLibrary('locale.library',0)
   iconbase:=OpenLibrary('icon.library',36)
   IF localebase THEN catalog:=OpenCatalogA(NIL,'midiIn.catalog', 0)
+  IF (utilitybase:=OpenLibrary('utility.library',37))=0 THEN Throw("LIB",'utility v37+')
   IF (mathieeedoubbasbase:=OpenLibrary('mathieeedoubbas.library',0))=0 THEN Raise("MATH")
   IF (cxbase:=OpenLibrary('commodities.library', 37))=0 THEN Throw("LIB",'commodities v37+')
   IF (reqtoolsbase:=OpenLibrary('reqtools.library',38))=0 THEN Throw("LIB",'reqtools v38+')
@@ -88,6 +90,10 @@ DEF res=-1,mid=-1,a,b,sigmidi,sigwnd,cxsigflag,sigtime,signal,type,mmsg,
   ENDIF
   sigtime:=Shl(1, timermp.sigbit)
   triggertime(timereq,1000000/10)
+
+  initsoundfx(NUMBANKS)
+
+  init_undo(10000)
 
   getargs()
   IF defta THEN IF 0 = (deffont:=OpenDiskFont(defta)) THEN END defta
@@ -113,7 +119,7 @@ DEF res=-1,mid=-1,a,b,sigmidi,sigwnd,cxsigflag,sigtime,signal,type,mmsg,
 
   defscreen:=LockPubScreen(pubscreenname)
   open_aboutpic(defscreen,defta)
-  open_status(defscreen,defta)
+  open_status(defscreen,defta,deffont)
   initprefs(prjname,bd)
 -> WriteF('prefs ok!\n')
 
@@ -221,11 +227,11 @@ DEF res=-1,mid=-1,a,b,sigmidi,sigwnd,cxsigflag,sigtime,signal,type,mmsg,
     ENDWHILE
 
 EXCEPT DO
-  freeaudiodevice()
-  clearsmplist()
+  audio_attrs([SFX_SET_AUDIO_STATUS,FALSE,NIL])
   IF mh THEN cleanmulti(mh)
   UnlockPubScreen(0,defscreen)
   deinstall_playtask()
+  clearsmplist(bd,smplist)
   freeallMRoutes()
   report_exception()
   IF broker THEN DeleteCxObjAll(broker)
@@ -233,6 +239,8 @@ EXCEPT DO
     WHILE msg:=GetMsg(broker_mp) DO ReplyMsg(msg)
     DeleteMsgPort(broker_mp)
   ENDIF
+  free_undo()
+  freesoundfx()
   IF timereq
     AbortIO(timereq); WaitIO(timereq)
     CloseDevice(timereq); DeleteIORequest(timereq)
@@ -245,6 +253,7 @@ EXCEPT DO
   IF diskfontbase THEN CloseLibrary(diskfontbase)
   IF reqtoolsbase THEN CloseLibrary(reqtoolsbase)
   IF cxbase THEN CloseLibrary(cxbase)
+  IF utilitybase THEN CloseLibrary(utilitybase)
   IF mathieeedoubbasbase THEN CloseLibrary(mathieeedoubbasbase)
   freemidiin_icon()
   IF iconbase THEN CloseLibrary(iconbase)

@@ -116,7 +116,9 @@ svxchancnt:
     ENDIF
   ENDWHILE
 
-  k:=vhdr.oneshothisamples+vhdr.repeathisamples ->frames
+  IF (k:=vhdr.oneshothisamples+vhdr.repeathisamples)=0   ->frames
+    k:=Div(l,chn); IF bits > 8 THEN k:=k/2
+  ENDIF
   IF chn > 1 THEN chn:=Div(l,chn) ELSE chn:=0 -> chanoffset
   t,l:=loadsvxBODY(fh,k,bits,chn)
 	si.start:=t

@@ -3,7 +3,8 @@ OPT OSVERSION=37
 
 
 MODULE 'tools/EasyGUI','intuition/intuition','intuition/screens',
-       'graphics/text','*mbkeycod'
+       'graphics/text','graphics/gfx','graphics/view','graphics/gfxbase',
+       'devices/inputevent','*mbkeycod','*drawpattern','exec/libraries'
 
 
 EXPORT ENUM KB_NONE=0,KB_FUN,KB_SPACE,KB_LOOP,KB_DUR,KB_RETURN,KB_PRI,KB_ELSE
@@ -23,6 +24,14 @@ EXPORT OBJECT pianokeys OF plugin
   keycode:LONG
 PRIVATE
   rport:LONG
+  darkpen:LONG
+  activepen:LONG
+  backpen:LONG
+  bgrnpen:LONG
+  currentpen:LONG
+  shadowpen:LONG
+  ptrnalloc:LONG
+  shinepen:LONG
   xm:INT
   ym:INT
   xx:INT
@@ -36,10 +45,7 @@ PRIVATE
   hiarea:CHAR
   boundset:CHAR
   boundselect:CHAR
-  textpen:CHAR
-  activepen:CHAR
-  backpen:CHAR
-  currentpen:CHAR
+  allocpens:CHAR
   status[128]:ARRAY OF CHAR
   playingkeys[128]:ARRAY OF CHAR
 ENDOBJECT
@@ -48,10 +54,11 @@ EXPORT DEF basesetb
 
 DEF lasttick
 
-EXPORT PROC min_size(ta,fh) OF pianokeys IS 462,36
+EXPORT PROC min_size(ta,fh) OF pianokeys IS 462,38
 
 EXPORT PROC init(screen) OF pianokeys
-DEF drinfo:PTR TO drawinfo,scr,penless,x:PTR TO INT,f:REG
+DEF drinfo:PTR TO drawinfo,scr:PTR TO screen,penless,x:PTR TO INT,f:REG
+    
 
   FOR f:=0 TO 127 ; self.status[f]:=0; self.playingkeys[f]:=0; ENDFOR
   lasttick:=0
@@ -61,20 +68,27 @@ DEF drinfo:PTR TO drawinfo,scr,penless,x:PTR TO INT,f:REG
   self.currentkey:=255
   self.loarea:=255
   self.hiarea:=127
-  self.textpen:=1
+  self.darkpen:=1
   self.activepen:=2
   self.backpen:=0
+  self.bgrnpen:=0
   self.currentpen:=3
+  self.shadowpen:=0
+  self.allocpens:=0
+  self.shinepen:=3
   IF screen=0 THEN scr:=LockPubScreen(NIL) ELSE scr:=screen
   IF scr
     IF drinfo:=GetScreenDrawInfo(scr)
       penless:=drinfo.numpens
       x:=drinfo.pens
-      IF penless>TEXTPEN THEN self.textpen:=x[TEXTPEN]
+      IF penless>SHADOWPEN THEN self.darkpen:=x[SHADOWPEN]
       IF penless>FILLPEN THEN self.activepen:=x[FILLPEN]
-      IF penless>SHINEPEN THEN self.backpen:=x[SHINEPEN]
+      IF penless>BACKGROUNDPEN THEN self.backpen:=x[BACKGROUNDPEN]
+      IF penless>BACKGROUNDPEN THEN self.bgrnpen:=x[BACKGROUNDPEN]
+      IF penless>BACKGROUNDPEN THEN self.shadowpen:=x[BACKGROUNDPEN]
       IF penless>HIGHLIGHTTEXTPEN THEN self.currentpen:=x[HIGHLIGHTTEXTPEN]
-      IF self.backpen=self.currentpen THEN self.backpen:=x[BACKGROUNDPEN]
+      IF penless>SHINEPEN THEN IF x[SHINEPEN]<>self.currentpen THEN self.backpen:=x[SHINEPEN]
+      IF penless>SHINEPEN THEN self.shinepen:=x[SHINEPEN]
       FreeScreenDrawInfo(scr,drinfo)
     ENDIF
     IF screen=0 THEN UnlockPubScreen(NIL,scr)
@@ -85,14 +99,47 @@ DEF drinfo:PTR TO drawinfo,scr,penless,x:PTR TO INT,f:REG
 ENDPROC
 
 EXPORT PROC clear_render(win:PTR TO window) OF pianokeys
+DEF x,cmap
   self.rport:=0
+  IF self.allocpens<>0
+    cmap:=win.wscreen.viewport.colormap; x:=1
+    IF self.allocpens AND x THEN ReleasePen(cmap,self.darkpen)
+    x:=Shl(x,1)
+    IF self.allocpens AND x THEN ReleasePen(cmap,self.activepen)
+    x:=Shl(x,1)
+    IF self.allocpens AND x THEN ReleasePen(cmap,self.backpen)
+    x:=Shl(x,1)
+    IF self.allocpens AND x THEN ReleasePen(cmap,self.currentpen)
+    x:=Shl(x,1)
+    IF self.allocpens AND x THEN ReleasePen(cmap,self.shadowpen)
+    self.allocpens:=0
+  ENDIF
+  self.ptrnalloc:=freepattern(self.ptrnalloc)
 ENDPROC
 
 EXPORT PROC render(ta,x,y,xs,ys,win:PTR TO window) OF pianokeys
-DEF keysize,smallkey,xsize,f,xx:REG,yy:REG,t,b,c,bsize:REG,yn:REG,xn:REG
+DEF keysize,smallkey,xsize,f,xx:REG,yy:REG,t,b,sh,c,bsize:REG,yn:REG,xn:REG,
+    graphicsbase:PTR TO lib,cmap,col,bit, pt:PTR TO INT,x1,x2,y1,y2
 
-  t:=self.textpen
+  graphicsbase:=gfxbase
+  IF graphicsbase.version >=39
+    cmap:=win.wscreen.viewport.colormap; bit:=1
+    IF (col:=ObtainBestPenA(cmap,$0,$0,$0,[OBP_PRECISION,PRECISION_EXACT,NIL,NIL]))>=0 THEN self.darkpen:=col
+    IF col>=0 THEN self.allocpens:=bit; bit:=Shl(bit,1)
+    IF (col:=ObtainBestPenA(cmap,$00000000,$88888888,$FFFFFFFF,[OBP_PRECISION,PRECISION_EXACT,NIL,NIL]))>=0 THEN self.activepen:=col
+    IF col>=0 THEN self.allocpens:=self.allocpens OR bit; bit:=Shl(bit,1)
+    IF (col:=ObtainBestPenA(cmap,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,[OBP_PRECISION,PRECISION_EXACT,NIL,NIL]))>=0 THEN self.backpen:=col
+    IF col>=0 THEN self.allocpens:=self.allocpens OR bit; bit:=Shl(bit,1)
+    IF (col:=ObtainBestPenA(cmap,$FFFFFFFF,$C0C0C0C0,$00000000,[OBP_PRECISION,PRECISION_EXACT,NIL,NIL]))>=0 THEN self.currentpen:=col
+    IF col>=0 THEN self.allocpens:=self.allocpens OR bit; bit:=Shl(bit,1)
+    IF (col:=ObtainBestPenA(cmap,$80808080,$80808080,$80808080,[OBP_PRECISION,PRECISION_EXACT,NIL,NIL]))>=0 THEN self.shadowpen:=col
+    IF col>=0 THEN self.allocpens:=self.allocpens OR bit
+    self.ptrnalloc:=drawpattern(win.rport,cmap,x,y,xs,ys,{patterncmap},{pattern},100,100)
+  ENDIF
+  t:=self.darkpen
   b:=self.backpen
+  sh:=self.shadowpen
+
   keysize:=ys/4*3
   smallkey:=keysize/3*2-1
   xsize:=(xs-12)/75
@@ -100,7 +147,7 @@ DEF keysize,smallkey,xsize,f,xx:REG,yy:REG,t,b,c,bsize:REG,yn:REG,xn:REG
 
   self.xsize:=xsize
 
-  xx:=(xs-(xsize*75))/2+x;  yy:=y+ys-keysize
+  xx:=(xs-(xsize*75))/2+x;  yy:=ys-keysize+y
   self.xx:=xx
   self.yy:=yy
 
@@ -109,19 +156,36 @@ DEF keysize,smallkey,xsize,f,xx:REG,yy:REG,t,b,c,bsize:REG,yn:REG,xn:REG
 
   self.rport:=stdrast:=win.rport
 
-  Box(x,y,x+xs-1,yy-1,t)
-  Box(x,yy,xx-2,yy+keysize-2,t)
-  Box(xx+(xsize*75)+2,yy,x+xs-1,yy+keysize-2,t)
+  IF self.ptrnalloc=0 THEN Box(x,y,x+xs-1,y+ys-1,self.activepen)
+  Box(xx-1,yy-9,xx+33,yy-1,t)
+  Line(xx+34,yy-1,xx+(xsize*75)+1,yy-1,t)
+  Line(xx-1,yy,xx-1,yy+keysize-2,t)
+  Line(xx+(xsize*75)+1,yy,xx+(xsize*75)+1,yy+keysize-2,t)
+
+  Line(x,y,x+xs-2,y,self.shinepen)
+  Line(x,y+1,x,y+ys-1,self.shinepen)
+  Line(x+1,y+ys-1,x+xs-1,y+ys-1,self.darkpen)
+  Line(x+xs-1,y,x+xs-1,y+ys-1,self.darkpen)
+
+  pt:={midiin_text}
+  yn:=yy-7
+  WHILE (c:=pt[]++)<>-1
+    WHILE (x1:=pt[]++)<>-1
+      y1:=pt[]++; x2:=pt[]++; y2:=pt[]++
+      Line(xx+x1+c+1,yn+y1,xx+x2+c+1,yn+y2,self.currentpen)
+    ENDWHILE
+  ENDWHILE
 
   c:=0; yn:=yy+keysize-1; xn:=xx+xsize-1
   Box(xx+1,yy,74*xsize+xn,yn,b)
   FOR f:=0 TO 74
-    Line(xx,yy,xx,yn,t); Line(xx+3,yn+1,xn,yn+1,t)
+    Line(xx,yy,xx,yn,t); Line(xx+2,yn+1,xn,yn+1,t)
+    Line(xx+2,yn,xn,yn,sh); Line(xx,yn+1,xx+1,yn+1,sh)
     IF c AND (c<>3)   ->  ### (c=1) OR (c=2) OR (c=4) OR (c=5) OR (c=6)
-      Box(xx-bsize,yy+1,xx+bsize,yy+smallkey,t)
+      Box(xx-bsize,yy+1,xx+bsize,yy+smallkey,t); Plot(xx-bsize+1,yy+2,b)
+      Plot(xx-bsize,yy+1,sh)
     ENDIF
-    INC c
-    IF c>6 THEN c:=0
+    INC c; IF c>6 THEN c:=0
     MOVE.L  xsize,D0
     ADD.L   D0,xx;  ADD.L D0,xn
   ENDFOR
@@ -210,6 +274,7 @@ EXPORT PROC message_test(imsg:PTR TO intuimessage,win:PTR TO window) OF pianokey
         CASE 9  ; RETURN TRUE
         CASE 13 ; RETURN TRUE
         CASE 32 ; RETURN TRUE
+        CASE DEL_CODE ; RETURN TRUE
         DEFAULT; RETURN FALSE
       ENDSELECT
   ELSEIF class AND IDCMP_INTUITICKS
@@ -223,7 +288,7 @@ EXPORT PROC message_action(class,qual,code,win:PTR TO window) OF pianokeys
 DEF xsize:REG,xm:REG,ym,oct:REG,mod:REG,key:REG
 
   IF class AND IDCMP_RAWKEY
-    self.keycode:=code OR MYRAWCODE
+    self.keycode:=code OR MYRAWCODE OR IF qual AND (IEQUALIFIER_LSHIFT OR IEQUALIFIER_RSHIFT) THEN SHIFTQUAL ELSE 0
   ELSEIF class AND IDCMP_VANILLAKEY
     self.keycode:=code
   ELSEIF class AND IDCMP_INTUITICKS
@@ -390,7 +455,7 @@ DEF x:REG,col1,col2,col3,a,k:REG,bsize,xsize:REG,y:REG,smallsize:REG,top,bottom,
   ENDIF
   
   smallsize:=self.smallsize
-  top:=2; bottom:=self.keysize-1
+  top:=2; bottom:=self.keysize-2
 
   IF k=self.currentkey
     col1:=self.currentpen
@@ -404,12 +469,12 @@ DEF x:REG,col1,col2,col3,a,k:REG,bsize,xsize:REG,y:REG,smallsize:REG,top,bottom,
         col2:=col1
       ELSE
         col1:=self.backpen
-        col2:=self.textpen
+        col2:=self.darkpen
       ENDIF
     ELSE
       y:=y AND STSMASK_RANGE
       col1:=self.backpen
-      col2:=self.textpen
+      col2:=self.darkpen
       col3:=self.activepen
       IF y AND STS_SET
         IF y AND STS_HI THEN tp2:=2 ELSE tp2:=smallsize/2
@@ -437,6 +502,8 @@ DEF x:REG,col1,col2,col3,a,k:REG,bsize,xsize:REG,y:REG,smallsize:REG,top,bottom,
     x:=((k+2)/2)*xsize+x
     Box(x-bsize,y+top,x+bsize,y+smallsize-1,col2)
     IF bt2 THEN Box(x-bsize,y+tp2,x+bsize,y+IF (bt2 >= smallsize) THEN (smallsize-1) ELSE bt2,col3)
+    Plot(x-bsize,y+3,self.shadowpen)
+    Plot(x-bsize,y+2,self.backpen)
   ELSE
     INC bsize
     k:=(k+1)/2
@@ -451,3 +518,33 @@ DEF x:REG,col1,col2,col3,a,k:REG,bsize,xsize:REG,y:REG,smallsize:REG,top,bottom,
   ENDIF
 ENDPROC
 
+midiin_text:
+INT 0, 0,0,0,4, 1,3,1,4, 1,0,2,0, 3,1,4,1, 5,0,6,0, 7,0,7,4, 6,3,6,4, -1
+INT 9, 0,0,0,4, 1,3,1,4, -1
+INT 12,0,0,0,2, 0,4,2,4, 0,3,1,3, 1,0,2,0, 3,1,4,2, 4,3,3,4, -1
+INT 18, 0,3,0,4, 1,0,1,4, -1
+INT 21, 0,0,2,0, 1,1,1,2, 1,3,2,3, 0,4,2,4, -1
+INT 25, 0,0,0,4, 1,3,1,4, 1,1,3,3, 4,3,4,4, 5,0,5,4, -1
+INT -1
+
+pattern:
+INCBIN 'mbguichunky.bin'
+patterncmap:
+LONG $00100000	/* Record Header */
+LONG $00000000,$00000000,$00000000
+LONG $FFFFFFFF,$FFFFFFFF,$FFFFFFFF
+LONG $EBBBBBBB,$EAAAAAAA,$F6666666
+LONG $D9999999,$D8888888,$EFFFFFFF
+LONG $C7777777,$C6666666,$E7777777
+LONG $B5555555,$B5555555,$DFFFFFFF
+LONG $A5555555,$A4444444,$D7777777
+LONG $96666666,$95555555,$D0000000
+LONG $84444444,$86666666,$C6666666
+LONG $69999999,$68888888,$ACCCCCCC
+LONG $53333333,$50000000,$93333333
+LONG $41111111,$3CCCCCCC,$7CCCCCCC
+LONG $31111111,$29999999,$63333333
+LONG $23333333,$1AAAAAAA,$4BBBBBBB
+LONG $15555555,$0FFFFFFF,$32222222
+LONG $0BBBBBBB,$06666666,$1AAAAAAA
+LONG $0

@@ -3,13 +3,13 @@ OPT OSVERSION=37
 OPT LARGE
 
 MODULE 'tools/EasyGUI','intuition/intuition','graphics/rastport','intuition/screens',
-       'graphics/text','graphics/gfx','graphics/view','layers'
+       'graphics/text','graphics/gfx','graphics/view','layers','exec/libraries'
 
 
 CONST P_WIDTH=256,
       P_HEIGHT=192
 
-EXPORT OBJECT aboutpicture OF plugin
+EXPORT OBJECT aboutpicture OF plugin PRIVATE
   tmpbitmap:PTR TO bitmap
   colors[64]:ARRAY OF CHAR
   font:PTR TO textfont
@@ -17,6 +17,7 @@ EXPORT OBJECT aboutpicture OF plugin
   fillpen:LONG
   shinepen:LONG
   highlightpen:LONG
+  gfxversion:INT
   obtainpenflag:INT
   regionbottom:INT
   regionright:INT
@@ -36,20 +37,22 @@ EXPORT PROC render(ta:PTR TO textattr,x,y,xs,ys,win:PTR TO window) OF aboutpictu
 DEF cmap,ptr:PTR TO CHAR,src:PTR TO CHAR,n:REG,r:REG,g:REG,b:REG,colour:REG,
     temprp:rastport, rp:PTR TO rastport,
     array[P_WIDTH]:ARRAY OF CHAR, tmparray[P_WIDTH]:ARRAY OF CHAR,
-    region=0, txex:textextent
+    region=0, txex:textextent,order:PTR TO CHAR
 
   ptr:={palette}
   cmap:=win.wscreen.viewport.colormap
-  IF KickVersion(39)
+  IF self.gfxversion >= 39
     self.obtainpenflag:=TRUE
+    order:=[1,2,0,7,8,6,19,3,27,52,18,30,51,58,14,4,29,61,5,10,35,63,23,9,12,21,40,17,57,22,47,42,
+    62,15,11,44,32,24,31,59,25,48,13,34,26,43,38,55,56,28,36,39,50,33,54,46,20,53,41,45,49,60,16,37]:CHAR
     FOR n:=0 TO 63
-      MOVE.L ptr,A0
+      colour:=order[n]*3 -> color order
+      MOVE.L ptr,A0; ADDA.L colour,A0
       MOVEQ #0,D0; MOVE.B (A0)+,D0; MOVE.L D0,r; SWAP D0; MOVE.W r,D0; MOVE.L D0,r; LSL.L #8,D0; OR.L D0,r
       MOVEQ #0,D0; MOVE.B (A0)+,D0; MOVE.L D0,g; SWAP D0; MOVE.W g,D0; MOVE.L D0,g; LSL.L #8,D0; OR.L D0,g
       MOVEQ #0,D0; MOVE.B (A0)+,D0; MOVE.L D0,b; SWAP D0; MOVE.W b,D0; MOVE.L D0,b; LSL.L #8,D0; OR.L D0,b
-      MOVE.L A0,ptr
       EXIT -1 = (colour:=ObtainBestPenA(cmap,r,g,b,[OBP_PRECISION,PRECISION_EXACT,NIL,NIL]))
-      self.colors[n]:=colour
+      r:=order[n]; self.colors[r]:=colour
     ENDFOR
   ELSE
     colour:= -1
@@ -178,8 +181,10 @@ ENDPROC TRUE
 
 EXPORT PROC init(screen) OF aboutpicture
 DEF bitmap=0:PTR TO bitmap, scr:PTR TO screen, drinfo:PTR TO drawinfo,penless,x:PTR TO INT,
-    font=NIL,raster,i
-  IF KickVersion(39)
+    font=NIL,raster,i,graphicsbase:PTR TO lib
+  graphicsbase:=gfxbase
+  self.gfxversion:=graphicsbase.version
+  IF self.gfxversion >= 39
     IF 0=(bitmap:=AllocBitMap(P_WIDTH,1,8,BMF_CLEAR OR BMF_INTERLEAVED, NIL)) THEN Raise("MEM")
   ELSE
     NEW bitmap; InitBitMap(bitmap, 8, P_WIDTH, 1 )
@@ -213,7 +218,7 @@ EXPORT PROC end() OF aboutpicture
 DEF bitmap:PTR TO bitmap
   IF bitmap:=self.tmpbitmap
     self.tmpbitmap:=0
-    IF KickVersion(39)
+    IF self.gfxversion >= 39
       FreeBitMap(bitmap)
     ELSE
       FreeRaster(bitmap.planes[], P_WIDTH, 8)

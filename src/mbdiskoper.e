@@ -4,10 +4,11 @@ OPT OSVERSION=37
 MODULE 'fabio/IFFParser_oo','exec/lists','exec/nodes',
   'intuition/intuition','reqtools','libraries/reqtools','libraries/midi',
   'workbench/workbench','icon',
-  '*midibplists','*mbbanks','*mblocale','*soundfx','*mbreport'
+  '*midibplists','*mbbanks','*mblocale','*mbreport','*soundfx_ahi','*mbundo'
 
 
-CONST MAGIC_VERSION_0_PREFS="mIn0"
+EXPORT CONST MAGIC_VERSION_0_PREFS="mIn0",
+             MAGIC_VERSION_1_PREFS="mIn1"
 
 EXPORT OBJECT mbprefs
   magic:LONG
@@ -48,16 +49,28 @@ PUBLIC
   led:CHAR
   midictrl:CHAR
   activeb:CHAR
+  ahiaudioid:LONG -> new in version 1
+  mixfreq:LONG
 ENDOBJECT
+
+OBJECT undosaveheader
+  undoversion:INT
+  undotypemax:INT
+  banksize:INT
+  bankscnt:INT
+ENDOBJECT
+
+CONST VERSION_0_UNDO=1000
 
 EXPORT DEF prjpath, sndpath, mysrclist:PTR TO lh
 
 DEF projecticon:PTR TO diskobject
 
 
-EXPORT PROC save_project(name,slist:PTR TO lh,bnk:PTR TO bank,prefs:PTR TO mbprefs, saveicons) HANDLE
-  DEF iff:PTR TO iffparser,snd:PTR TO sfx, nb:bank
-  DEF f,i,ln:PTR TO ln
+EXPORT PROC save_project(name,slist:PTR TO lh,bnk:PTR TO bank,prefs:PTR TO mbprefs, saveicons, saveundo) HANDLE
+DEF iff:PTR TO iffparser,snd:PTR TO sfx, nb:bank,
+    f,i,ln:PTR TO lln,
+    undosavehd:undosaveheader,c
 
   NEW iff.iffparser()
 
@@ -69,19 +82,13 @@ EXPORT PROC save_project(name,slist:PTR TO lh,bnk:PTR TO bank,prefs:PTR TO mbpre
   iff.writechunk({f},4)
   FOR f:=0 TO NUMBANKS-1
     CopyMem(bnk[f], nb, SIZEOF bank)
-    IF snd:=nb.instr
-      ln:=slist.head; i:=1
-      WHILE ln.succ
-        IF snd=getvarafterln(ln) THEN nb.instr:=i
-        ln:=ln.succ; INC i
-      ENDWHILE
-    ENDIF
+    IF snd:=nb.instr THEN nb.instr:=convlnptrtonum(snd,slist)
     iff.writechunk(nb,SIZEOF bank)
   ENDFOR
   iff.closechunk()
 
   iff.createchunk("MBFF","PREF")
-    prefs.magic:=MAGIC_VERSION_0_PREFS
+    prefs.magic:=MAGIC_VERSION_1_PREFS
     prefs.sndoffs:=SIZEOF mbprefs
     prefs.prjoffs:=StrLen(sndpath) + 1 + SIZEOF mbprefs
     prefs.routeoffs:=prefs.prjoffs + StrLen(prjpath) + 1
@@ -89,9 +96,9 @@ EXPORT PROC save_project(name,slist:PTR TO lh,bnk:PTR TO bank,prefs:PTR TO mbpre
     iff.writechunk(sndpath,StrLen(sndpath)+1)
     iff.writechunk(prjpath,StrLen(prjpath)+1)
     ln:=mysrclist.head
-    WHILE ln.succ
-      IF ln.name[] <> " " THEN iff.writechunk(ln.name+2,StrLen(ln.name+2)+1)
-      ln:=ln.succ
+    WHILE ln.ln.succ
+      IF ln.ln.name[] <> " " THEN iff.writechunk(ln.ln.name+2,StrLen(ln.ln.name+2)+1)
+      ln:=ln.ln.succ
     ENDWHILE
     iff.writechunk('',1)
   iff.closechunk()
@@ -99,11 +106,26 @@ EXPORT PROC save_project(name,slist:PTR TO lh,bnk:PTR TO bank,prefs:PTR TO mbpre
   IF slist.head.succ
     iff.createchunk("MBFF","LSMP")
         ln:=slist.head
-        WHILE ln.succ
-          snd:=getvarafterln(ln)
+        WHILE ln.ln.succ
+          snd:=ln.pointer
           IF i:=snd.pathname() THEN iff.writechunk(i,StrLen(i)+1)
-          ln:=ln.succ
+          ln:=ln.ln.succ
         ENDWHILE
+    iff.closechunk()
+  ENDIF
+
+  IF saveundo
+    iff.createchunk("MBFF","UNDO")
+    undosavehd.undoversion:=VERSION_0_UNDO
+    undosavehd.undotypemax:=UNDO_SET_MAX
+    undosavehd.banksize:=SIZEOF bank
+    undosavehd.bankscnt:=NUMBANKS
+    iff.writechunk(undosavehd,SIZEOF undosaveheader)
+    f:=NIL; f,i,c:=exportundo(f)
+    WHILE f
+      iff.writechunk({c},4); iff.writechunk(f,i)
+      f,i,c:=exportundo(f)
+    ENDWHILE
     iff.closechunk()
   ENDIF
 
@@ -117,166 +139,98 @@ EXCEPT DO
   IF exception THEN ReThrow()
 ENDPROC
 
+EXPORT PROC loadinstrumentsfrombank(name,slist:PTR TO lh) HANDLE
+  load_project(name,slist,NIL,NIL)
+EXCEPT
+  RETURN FALSE
+ENDPROC TRUE
+
 EXPORT PROC load_project(name,slist:PTR TO lh,bnk:PTR TO bank,prefs:PTR TO mbprefs) HANDLE
-DEF iff:PTR TO iffparser,snd:PTR TO sfx,
-    ln:PTR TO ln,f:PTR TO CHAR,v,z,l,h,s,
-    str[256]:STRING, nb:PTR TO bank, bufern[256]:ARRAY OF CHAR,
-    instr[NUMBANKS]:ARRAY OF LONG
+DEF iff:PTR TO iffparser, f,z,s,v,
+    nb:PTR TO bank,instr[NUMBANKS]:ARRAY OF LONG,
+    undosavehd:undosaveheader,b,x
 
   NEW iff.iffparser()
 
   iff.load(name)
   iff.setscan("MBFF","PREF")
   iff.setscan("MBFF","BANK")
+  iff.setscan("MBFF","UNDO")
   iff.setscan("MBFF","LSMP")
   iff.exit("MBFF","FORM")     -> We will stop when FORM ends!
 
   iff.scan()
+  FOR f:=0 TO NUMBANKS-1 DO instr[f]:=0
 
-  FOR f:=0 TO NUMBANKS-1
-    instr[f]:=0
-  ENDFOR
-  initbanks()
+  IF bnk
 
-  ln:=slist.head
-  WHILE ln.succ
-    snd:=getvarafterln(ln)
-    ln:=ln.succ
-    Remove(ln.pred);  END snd
-  ENDWHILE
-
-  IF prefs
-    IF s:=iff.first("MBFF","PREF")
-      z:=iff.size()
-      IF z >= SIZEOF mbprefs
-        CopyMem(s,prefs,SIZEOF mbprefs)
-        IF prefs.magic = MAGIC_VERSION_0_PREFS
-          IF z > prefs.sndoffs
-            v:=s+prefs.sndoffs
-            IF StrLen(v) > 0 THEN StrCopy(sndpath,v,ALL)
-          ENDIF  
-          IF z > prefs.prjoffs
-            v:=s+prefs.prjoffs
-            IF StrLen(v) > 0 THEN StrCopy(prjpath,v,ALL)
-          ENDIF  
-          IF z > prefs.routeoffs
-            v:=s+prefs.routeoffs
-            WHILE ((f:=StrLen(v)) > 0) AND ((v+f) < (s+z))
-              ln:=mysrclist.head
-              WHILE ln.succ
-                IF StrCmp(ln.name+2,v,ALL) THEN ln.name[]:="+"
-                ln:=ln.succ
-              ENDWHILE
-              v:=v+f+1
-            ENDWHILE
-          ENDIF  
-        ELSE
-          prefs:=0
-        ENDIF
+    clearsmplist(bnk,slist)
+  
+    IF prefs
+      IF s:=iff.first("MBFF","PREF")
+        z:=iff.size()
+        IF convertprefs(s,z,prefs)=FALSE THEN prefs:=0
       ELSE
         prefs:=0
       ENDIF
-    ELSE
-      prefs:=0
     ENDIF
-  ENDIF
-
-  IF s:=iff.first("MBFF","BANK")
-    IF (v:=Long(s)) <= SIZEOF bank
-      IF (z:=(iff.size()-4)/v) >= 1
-        IF z > NUMBANKS THEN z:=NUMBANKS
-        FOR f:=0 TO (z-1)
-          nb:=f*v+s+4
-          instr[f]:=nb.instr ;  nb.instr:=0 -> no accident play!
-          CopyMem(nb, bnk[f], v)
-          IF checkbank(bnk[f])=FALSE THEN Raise("bprj")
-        ENDFOR
+  
+    IF s:=iff.first("MBFF","BANK")
+      IF (v:=Long(s)) <= SIZEOF bank
+        IF (z:=(iff.size()-4)/v) >= 1
+          IF z > NUMBANKS THEN z:=NUMBANKS
+          FOR f:=0 TO (z-1)
+            nb:=f*v+s+4
+            instr[f]:=nb.instr ;  nb.instr:=0 -> no accident play!
+            deletebank(bnk[f]); CopyMem(nb, bnk[f], v)
+            IF checkbank(bnk[f])=FALSE THEN Raise("bprj")
+          ENDFOR
+        ENDIF
+      ELSE
+        Raise("bprj")
       ENDIF
     ELSE
       Raise("bprj")
     ENDIF
+
+    IF s:=iff.first("MBFF","UNDO")
+      IF (v:=Long(s)) > SIZEOF undosaveheader
+        CopyMem(s,undosavehd,SIZEOF undosaveheader)
+        IF (undosavehd.undoversion=VERSION_0_UNDO) AND (undosavehd.undotypemax<=UNDO_SET_MAX)
+          IF (z:=undosavehd.banksize) <= SIZEOF bank
+            IF (b:=undosavehd.bankscnt) <= NUMBANKS
+              f:=s+SIZEOF undosaveheader
+              WHILE f<(s+v)
+                CopyMem(f,{x},4); f:=f+4
+                EXIT (f:=importundo(f,x,b,z))=NIL
+              ENDWHILE
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+
   ELSE
-    Raise("bprj")
+    IF iff.first("MBFF","BANK")=NIL THEN Raise("brpj")
   ENDIF
 
   IF s:=iff.first("MBFF","LSMP")
     z:=iff.size()
-    v:=s;  h:=1 -> number of sample
-    WHILE z>0
-      IF (z:=z-StrLen(v)-1) >= 0
-        printstatus(getLocStr(STRID_LOOKINGFORSAMPLE),FilePart(v),'')
-        IF ln:=FindName(slist,FilePart(v))
-          snd:=getvarafterln(ln)
-        ELSEIF (snd:=getsound(v))=FALSE                  -> not here!
-          StrCopy(str,FilePart(v))    -> only name
-          AstrCopy(bufern,sndpath,256)  -> sample path!
-          AddPart(bufern,str,256)       ->  'path/name'
-          LowerStr(bufern)             -> nice this one
-          IF ln:=FindName(slist,FilePart(bufern))
-            snd:=getvarafterln(ln)
-          ELSEIF (snd:=getsound(bufern))=FALSE  -> neither here!
-            IF 1=(l:=asksfx(str))
-              AstrCopy(bufern,sndpath,256)  -> (new) sample path!
-              AddPart(bufern,str,256)   ->  (new) 'path/name'
-              LowerStr(bufern)             -> nice this one
-              IF ln:=FindName(slist,FilePart(bufern))
-                snd:=getvarafterln(ln)
-              ELSE
-                snd:=getsound(bufern)
-              ENDIF
-            ELSEIF l=2
-              z:=0
-            ENDIF
-          ENDIF
-        ENDIF
-        IF snd
-          IF ln=0 THEN addsorted(slist,snd.ln)
-          FOR f:=0 TO NUMBANKS-1
-            IF instr[f]=h
-              IF loadsmp(snd) THEN bnk[f].instr:=snd -> wow can play now!
-            ENDIF
-          ENDFOR
-        ENDIF
-      ENDIF
-      v:=v+StrLen(v)+1
-      INC h
-    ENDWHILE
+    load_instruments(s,z,slist, bnk, instr)
   ENDIF
-  
   iff.close()
 
-  getmidiin_icon(name)
+  IF bnk THEN getmidiin_icon(name)
 
 EXCEPT DO
-  closestatus()
   END iff                            -> ALWAYS END the OBJECT before exiting!!!!
-  IF exception="bprj" THEN initbanks()
+  IF exception="bprj" THEN initbanks(bnk)
   IF exception THEN ReThrow()
 ENDPROC prefs
 
-PROC loadsmp(snd:PTR TO sfx) HANDLE
-  printstatus(getLocStr(STRID_LOADINGSAMPLE),0,0)
-  snd.load() -> may cause the exception
-EXCEPT
-  report_exception()
-  RETURN FALSE
-ENDPROC TRUE
-
-PROC getsound(name) HANDLE
-DEF snd=0:PTR TO sfx,a,b
-  NEW snd
-  a,b:=snd.init(name)
-  printstatus(0,0,b)
-EXCEPT
-    IF snd THEN END snd
-    RETURN 0
-ENDPROC snd
-
 EXPORT PROC mergeproject(name,slist:PTR TO lh,bnk:PTR TO bank,numbnk) HANDLE
-DEF iff:PTR TO iffparser,snd:PTR TO sfx,
-    ln:PTR TO ln,f:PTR TO CHAR,v,z,l,h,s,n,skip=FALSE,
-    str[256]:STRING, nb:PTR TO bank, bufern[256]:ARRAY OF CHAR,
-    instr[NUMBANKS]:ARRAY OF LONG
+DEF iff:PTR TO iffparser, f,v,z,l,s,n,skip=FALSE,
+    nb:PTR TO bank, instr[NUMBANKS]:ARRAY OF LONG
 
   NEW iff.iffparser()
 
@@ -292,7 +246,7 @@ DEF iff:PTR TO iffparser,snd:PTR TO sfx,
   IF s:=iff.first("MBFF","BANK")
     IF (v:=Long(s)) <= SIZEOF bank
       IF (z:=(iff.size()-4)/v) >= 1
-        n:=0;
+        n:=0
         FOR f:=0 TO (z-1)
           nb:=f*v+s+4
           IF nb.instr <> NIL; INC n; IF checkbank(nb)=FALSE THEN Raise("bprj"); ENDIF
@@ -334,58 +288,18 @@ DEF iff:PTR TO iffparser,snd:PTR TO sfx,
 
   IF s:=iff.first("MBFF","LSMP")
     z:=iff.size()
-    v:=s;  h:=1 -> number of sample
-    WHILE z>0
-      IF (z:=z-StrLen(v)-1) >= 0
-        printstatus(getLocStr(STRID_LOOKINGFORSAMPLE),FilePart(v),'')
-        IF ln:=FindName(slist,FilePart(v))
-          snd:=getvarafterln(ln)
-        ELSEIF (snd:=getsound(v))=FALSE                  -> not here!
-          StrCopy(str,FilePart(v))    -> only name
-          AstrCopy(bufern,sndpath,256)  -> sample path!
-          AddPart(bufern,str,256)       ->  'path/name'
-          LowerStr(bufern)             -> nice this one
-          IF ln:=FindName(slist,FilePart(bufern))
-            snd:=getvarafterln(ln)
-          ELSEIF (snd:=getsound(bufern))=FALSE  -> neither here!
-            IF 1=(l:=asksfx(str))
-              AstrCopy(bufern,sndpath,256)  -> (new) sample path!
-              AddPart(bufern,str,256)   ->  (new) 'path/name'
-              LowerStr(bufern)             -> nice this one
-              IF ln:=FindName(slist,FilePart(bufern))
-                snd:=getvarafterln(ln)
-              ELSE
-                snd:=getsound(bufern)
-              ENDIF
-            ELSEIF l=2
-              z:=0
-            ENDIF
-          ENDIF
-        ENDIF
-        IF snd
-          IF ln=0 THEN addsorted(slist,snd.ln)
-          FOR f:=0 TO NUMBANKS-1
-            IF instr[f]=h
-              IF loadsmp(snd) THEN bnk[f].instr:=snd -> wow can play now!
-            ENDIF
-          ENDFOR
-        ENDIF
-      ENDIF
-      v:=v+StrLen(v)+1
-      INC h
-    ENDWHILE
+    load_instruments(s,z,slist, bnk, instr)
   ENDIF
 
   iff.close()
 
 EXCEPT DO
-  closestatus()
   END iff                            -> ALWAYS END the OBJECT before exiting!!!!
   IF exception THEN ReThrow()
 ENDPROC
 
 
-PROC asksfx(name)
+PROC asksfx(name,size)
 DEF req=0:PTR TO rtfilerequester,file[109]:ARRAY OF CHAR
 DEF ask
   IF (ask:=reqsample(name))=1
@@ -395,7 +309,8 @@ DEF ask
       IF RtFileRequestA(req,file,getLocStr(STRID_CHOOSEANOTHERSAMPLE),[
                 RTFI_FLAGS,FREQF_PATGAD,0])
         StrCopy(sndpath,req.dir,ALL)
-        StrCopy(name,file,ALL)
+        AstrCopy(name,sndpath,size)
+        AddPart(name,file,size)
       ELSE
         ask:=0
       ENDIF
@@ -411,7 +326,7 @@ ENDPROC ask
 */
 EXPORT PROC savesettings(slist:PTR TO lh,prefs:PTR TO mbprefs) HANDLE
   DEF iff:PTR TO iffparser,snd:PTR TO sfx,
-      i,ln:PTR TO ln
+      i,ln:PTR TO lln
 
   NEW iff.iffparser()
 
@@ -419,7 +334,7 @@ EXPORT PROC savesettings(slist:PTR TO lh,prefs:PTR TO mbprefs) HANDLE
   iff.createchunk("MBFF","FORM")
 
   iff.createchunk("MBFF","PREF")
-    prefs.magic:=MAGIC_VERSION_0_PREFS
+    prefs.magic:=MAGIC_VERSION_1_PREFS
     prefs.sndoffs:=SIZEOF mbprefs
     prefs.prjoffs:=StrLen(sndpath) + 1 + SIZEOF mbprefs
     prefs.routeoffs:=prefs.prjoffs + StrLen(prjpath) + 1
@@ -427,9 +342,9 @@ EXPORT PROC savesettings(slist:PTR TO lh,prefs:PTR TO mbprefs) HANDLE
     iff.writechunk(sndpath,StrLen(sndpath)+1)
     iff.writechunk(prjpath,StrLen(prjpath)+1)
     ln:=mysrclist.head
-    WHILE ln.succ
-      IF ln.name[] <> " " THEN iff.writechunk(ln.name+2,StrLen(ln.name+2)+1)
-      ln:=ln.succ
+    WHILE ln.ln.succ
+      IF ln.ln.name[] <> " " THEN iff.writechunk(ln.ln.name+2,StrLen(ln.ln.name+2)+1)
+      ln:=ln.ln.succ
     ENDWHILE
     iff.writechunk('',1)
   iff.closechunk()
@@ -437,10 +352,10 @@ EXPORT PROC savesettings(slist:PTR TO lh,prefs:PTR TO mbprefs) HANDLE
   IF slist.head.succ
     iff.createchunk("MBFF","LSMP")
         ln:=slist.head
-        WHILE ln.succ
-          snd:=getvarafterln(ln)
+        WHILE ln.ln.succ
+          snd:=ln.pointer
           IF i:=snd.pathname() THEN iff.writechunk(i,StrLen(i)+1)
-          ln:=ln.succ
+          ln:=ln.ln.succ
         ENDWHILE
     iff.closechunk()
   ENDIF
@@ -464,8 +379,7 @@ EXCEPT
 ENDPROC ret
 
 EXPORT PROC loadsettings(slist:PTR TO lh,prefs:PTR TO mbprefs,bnk,projectname) HANDLE
-DEF iff=0:PTR TO iffparser,snd:PTR TO sfx,s,v,z,
-    name[300]:ARRAY OF CHAR
+DEF iff=0:PTR TO iffparser,s,z,name[300]:ARRAY OF CHAR
 
   IF StrLen(projectname) > 0
     AstrCopy(name,prjpath,300); AddPart(name,projectname,300)
@@ -474,8 +388,6 @@ DEF iff=0:PTR TO iffparser,snd:PTR TO sfx,s,v,z,
   defaultsettings(prefs)
   AstrCopy(name,{preferencesname},300)
   IF FileLength(name) = -1 THEN RETURN -1
-
-  printstatus('',0,0)
 
   NEW iff.iffparser()
   iff.load(name)
@@ -493,23 +405,12 @@ DEF iff=0:PTR TO iffparser,snd:PTR TO sfx,s,v,z,
 
   IF s:=iff.first("MBFF","LSMP")
     z:=iff.size()
-    v:=s
-    printstatus(getLocStr(STRID_INITINSTRUMENTS),0,0)
-    WHILE z>0
-      IF (z:=z-StrLen(v)-1) >= 0
-        printstatus(0,FilePart(v),0)
-        IF snd:=getsound(v)
-          addsorted(slist,snd.ln)
-        ENDIF
-      ENDIF
-      v:=v+StrLen(v)+1
-    ENDWHILE
+    load_instruments(s,z,slist)
   ENDIF
 
   iff.close()
 
 EXCEPT DO
-  closestatus()
   END iff                            -> ALWAYS END the OBJECT before exiting!!!!
   IF exception
     defaultsettings(prefs)
@@ -531,10 +432,20 @@ ENDOBJECT
 PROC convertprefs(s:PTR TO mbprefs,l,prefs:PTR TO mbprefs)
 DEF ln:PTR TO ln,oprefs:PTR TO mbprefs_old,v,f
   
-  IF s.magic <> MAGIC_VERSION_0_PREFS
+  IF s.magic = MAGIC_VERSION_1_PREFS
+    IF l < SIZEOF mbprefs THEN RETURN FALSE
+    CopyMem(s,prefs,SIZEOF mbprefs)
+  ELSEIF s.magic = MAGIC_VERSION_0_PREFS
+    IF l < (SIZEOF mbprefs-8) THEN RETURN FALSE
+    CopyMem(s,prefs,SIZEOF mbprefs-8)
+    IF prefs.dmaper THEN prefs.mixfreq:=Div(3546895,prefs.dmaper)
+    prefs.dmaper:=0
+  ELSE
     oprefs:=s;
     IF oprefs.routeoffs <> SIZEOF mbprefs_old THEN RETURN FALSE
     prefs.dmaper:=oprefs.dmaper
+    IF prefs.dmaper THEN prefs.mixfreq:=Div(3546895,prefs.dmaper)
+    prefs.dmaper:=0
     prefs.routeoffs:=NIL
     ln:=mysrclist.head
     WHILE ln.succ
@@ -546,9 +457,6 @@ DEF ln:PTR TO ln,oprefs:PTR TO mbprefs_old,v,f
     prefs.led:=oprefs.led
     prefs.midictrl:=oprefs.midictrl
     prefs.activeb:=oprefs.activeb
-  ELSE
-    IF l < SIZEOF mbprefs THEN RETURN FALSE
-    CopyMem(s,prefs,SIZEOF mbprefs)
   ENDIF
   IF prefs.sndoffs
     v:=s+prefs.sndoffs
@@ -567,7 +475,7 @@ DEF ln:PTR TO ln,oprefs:PTR TO mbprefs_old,v,f
         ln:=ln.succ
       ENDWHILE
       v:=v+f+1
-      IF v >= (s+l) THEN Raise("PREF")
+      IF v >= (s+l) THEN RETURN TRUE
     ENDWHILE
   ENDIF  
 ENDPROC TRUE
@@ -597,7 +505,7 @@ PROC defaultsettings(prefs:PTR TO mbprefs)
   prefs.midimonwinh:=-1
   prefs.midimonwinw:=-1
   prefs.midimonhide:=TRUE
-  prefs.dmaper:=125
+  prefs.dmaper:=0
   prefs.routeoffs:=NIL
   prefs.sndoffs:=NIL
   prefs.prjoffs:=NIL
@@ -608,6 +516,8 @@ PROC defaultsettings(prefs:PTR TO mbprefs)
   prefs.maxchannels:=4
   prefs.msgflags:=MMF_NOTEOFF OR MMF_NOTEON OR MMF_PITCHBEND OR MMF_POLYPRESS OR MMF_CTRL OR MMF_CHANPRESS
   prefs.chanflags:=$FFFF
+  prefs.ahiaudioid:=0
+  prefs.mixfreq:=28375
   StrCopy(prjpath,'PROGDIR:Projects')
   SetStr(sndpath,0)
 ENDPROC
@@ -615,6 +525,34 @@ ENDPROC
 
 preferencesname: CHAR 'PROGDIR:midiIn.pref',0
 
+PROC load_instruments(m,size,slist:PTR TO lh, bn=FALSE:PTR TO bank, instr=FALSE:PTR TO LONG)
+DEF i,x,l, buf[512]:ARRAY OF CHAR, snd:PTR TO sfx, all
+  i:=m; all:=0; WHILE i<(m+size); i:=i+StrLen(i)+1; INC all; ENDWHILE
+  x:=1 -> number of sample
+  WHILE size>0
+    IF (size:=size-StrLen(m)-1) >= 0
+      printstatus(getLocStr(STRID_LOOKINGFORSAMPLE),FilePart(m),0,x,all)
+      IF (snd:=addsnd(m, slist, TRUE))=NIL
+        AstrCopy(buf,sndpath,512)  -> sample path!
+        AddPart(buf,FilePart(m),512) ->  'path/name'
+        IF (snd:=addsnd(buf, slist, TRUE))=NIL
+          AstrCopy(buf, FilePart(m), 512)
+          IF 1=(l:=asksfx(buf,512))
+            snd:=addsnd(buf, slist)
+          ELSEIF l=2
+            size:=0
+          ENDIF
+        ENDIF
+      ENDIF
+      IF (bn<>NIL) AND (instr<>NIL) AND (snd<>NIL)
+        FOR i:=0 TO NUMBANKS-1 DO IF instr[i]=x THEN setinstr(bn[i], snd)
+      ENDIF
+    ENDIF
+    m:=m+StrLen(m)+1
+    INC x
+  ENDWHILE
+  addingsamplesover()
+ENDPROC
 
 /* ========================================================================
                                 icons functions
@@ -661,3 +599,5 @@ DEF olddeftool
     ENDIF
   ENDIF
 ENDPROC
+
+
