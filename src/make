@@ -1,0 +1,95 @@
+FailAt 21
+flushcache
+delete #?.m QUIET
+IF NOT EXISTS RAM:ec
+  Copy E:bin/ec RAM:
+  echo SpeedUp!
+ENDIF
+Run <>NIL: rx "address 'PLAY' SAY '-p65 -n Making.'"
+FailAt 1
+echo "mbLocale ... " NOLINE
+ec > T:ec_make_log "mbLocale.e"
+echo "ok"
+echo "mbkeycod ... " NOLINE
+ec > T:ec_make_log "mbkeycod.e"
+echo "ok"
+echo "mbtitle ... " NOLINE
+ec > T:ec_make_log "mbtitle.e"
+echo "ok"
+echo "simpleiffparse ... "  NOLINE
+ec > T:ec_make_log "simpleiffparse.e" 
+echo "ok"
+echo "loadssnd ... "  NOLINE
+ec > T:ec_make_log "loadssnd.e" 
+echo "ok"
+echo "loadsvxbody ... "  NOLINE
+ec > T:ec_make_log "loadsvxbody.e" 
+echo "ok"
+echo "loadwavedata ... "  NOLINE
+ec > T:ec_make_log "loadwavedata.e" 
+echo "ok"
+echo "wave ... "  NOLINE
+ec > T:ec_make_log "wave.e" 
+echo "ok"
+echo "svx ... "  NOLINE
+ec > T:ec_make_log "svx.e" 
+echo "ok"
+echo "aiff ... "  NOLINE
+ec > T:ec_make_log "aiff.e" 
+echo "ok"
+echo "extloader ... "  NOLINE
+ec > T:ec_make_log "extloader.e" 
+echo "ok"
+echo "play14unlim ... "  NOLINE
+ec > T:ec_make_log "play14unlim.e" 
+echo "ok"
+echo "notecalc ... "  NOLINE
+ec > T:ec_make_log "notecalc.e" 
+echo "ok"
+echo "soundFX ... "  NOLINE
+ec > T:ec_make_log "soundFX.e" 
+echo "ok"
+echo "MidiBPlists ... "  NOLINE
+ec > T:ec_make_log "MidiBPlists.e" 
+echo "ok"
+echo "mbbanks ... "  NOLINE
+ec > T:ec_make_log "mbbanks.e" 
+echo "ok"
+echo "mbPlay ... "  NOLINE
+ec > T:ec_make_log "mbPlay.e" 
+echo "ok"
+echo "mbabout ... "  NOLINE
+ec > T:ec_make_log "mbabout.e"
+echo "ok"
+echo "mbmmonit ... "  NOLINE
+ec > T:ec_make_log "mbmmonit.e"
+echo "ok"
+echo "mbLeds ... "  NOLINE
+ec > T:ec_make_log "mbLeds.e"
+echo "ok"
+echo "mbGui ... "  NOLINE
+ec > T:ec_make_log "mbGui.e" 
+echo "ok"
+echo "mbenvelope ... "  NOLINE
+ec > T:ec_make_log "mbenvelope.e" 
+echo "ok"
+echo "mbreport ... "  NOLINE
+ec > T:ec_make_log "mbreport.e" 
+echo "ok"
+echo "mbDiskoper ... "  NOLINE
+ec > T:ec_make_log "mbDiskoper.e" 
+echo "ok"
+echo "mbsetup ... "  NOLINE
+ec > T:ec_make_log "mbsetup.e" 
+echo "ok"
+echo "mbscopes ... "  NOLINE
+ec > T:ec_make_log "mbscopes.e" 
+echo "ok"
+echo "mbwindow ... "  NOLINE
+ec > T:ec_make_log "mbwindow.e" 
+echo "ok"
+echo "MidiIn ... "  NOLINE
+ec > T:ec_make_log ADDBUF=2 "MidiIn.e" 
+echo "ok"
+FailAt 21
+rx "address 'PLAY' SAY '-p65 -r Made.'"

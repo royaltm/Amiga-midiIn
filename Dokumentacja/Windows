@@ -1,0 +1,211 @@
+                           ##############
+                           midiIn Windows
+                           ##############
+
+   There are five midiIn windows: Main window, Sample details window,
+Envelope window, Scope window and MIDI Monitor window. All windows
+(except Main window) may be open or closed. Closing Main window
+quits midiIn. You can toggle between Main, Bank and Envelope with
+TAB key, or choose the window with right Amiga + 1,2,3,4,5 keys.
+   'Esc' key closes active window (except Main window, of course).
+   Position and size of all windows are saved with the Save settings
+function if the <Save layout> flag in the <Settings> menu is checked.
+
+   There is an additional Advanced Settings window open by right
+Amiga + p.
+
+
+Main window
+^^^^^^^^^^^
+
+   On the top of the midiIn main window there is a MIDI keyboard.
+On this keyboard You can select ranges of banks, base notes and play
+samples with mouse if the Midi control is turned off (see <How to
+work with midiIn>).  Incoming NoteOn messages are displayed on this
+keyboard highlighting the corresponding keys.
+   In a box under the keyboard appears the note and MIDI number of
+selected key, incoming NoteOn message, or base note of selected
+bank.
+   To the right there are four important gadgets: Edit range (it
+turns on/off the range edit mode), Midi control (turns on/off MIDI
+control of midiIn), Audio (it allocates/frees audio channels) and
+Follow (turns on/off the Follow mode).
+   If MIDI control is turned off You can play samples with a mouse
+clicking on keyboard (sample range is not taken into consideration -
+You can play on the whole keyboard), or with Enter key - playing the
+base frequency.
+   Below there is the bank description section (the biggest part of
+window), and the Instrument List (on the right).
+   In the bank description section there is the Instrument (sample)
+name in a box and a big Free gadget. This gadget removes sample from
+active bank (the sample still remains in the Instrument list and
+other parameters of bank are not changed, so You can easily exchange
+one sample with another from the list). There are also slider
+gadgets for Midi channel, Bank priority, Fine tune and Mute Groups,
+gadgets for sample duration mode, Loop, Mono and Base key - all described
+in <How to use midiIn> chapter.
+   The Instrument List is described in <the same chapter>.
+   The Reload gadget placed below the Free gadget reloads sample
+in active bank from disk. If You want to edit the sample You use in
+external sample manipulation program, You can do it, and after
+saving Your changes back to disk You have to reload it using this
+gadget. There is also a Reload All entry in Project menu, which
+causes midiIn to reload all samples.
+
+
+Details window
+^^^^^^^^^^^^^^
+
+   At the top there are some important informations about sample
+loaded to active bank: base frequency (read from the sample file),
+duration of sample played with its base frequency, and full path to
+sample file.
+
+   Below, You can change essential parameters of the sample. These 
+are:
+
+ - Offset - this allows You to select from which moment the sample
+   starts. You can choose between 0 ms (from the beginning) and 3000
+   ms (from the 3rd second of sample). If You select bigger offset
+   than sample duration (seen in the upper right corner of this
+   window) the sample isn't played.
+   Offset is scaled in miliseconds and may value from 0 ms to 3000 ms
+   ( = 3 s ). This time values are correct only for base frequency of
+   the sample - they get shorter as You play the sample higher, and
+   longer as You play lower than the base frequency.
+   With Offset You can achieve various interesting and useful
+   effects: cut the unwanted miliseconds of silence before drum hit,
+   fix the attack of a base drum by cutting first 3-4 miliseconds,
+   or even make drumloop start from snare - all without leaving
+   midiIn and using external sample processor.
+
+ - Volume (%) - sets the Volume of sample; note that it works in
+   real time - You can alter this parameter while playing and hear
+   the difference as You move mouse! 100 means normal volume,
+   exactly the same loudness as the original sample. You can choose
+   between 0 (no sound at all) and 200 (200 % of original volume).
+   There are two gadgets near the slider: "Max" gadget calculates
+   the maximum volume without distorting the sample (so it will be
+   more that 100 only for samples in which no data byte has maximum
+   value), "Nor" gadget sets volume to 100.
+
+   *** Note about volume: using standard Amiga audio with 14 bit
+       output disables hardware volume control of sound. Therefore
+       samples are recalculated in realtime to achieve requested
+       volume. Lower volume means worse quality, because of bit
+       resolution.
+
+ - Velocity - how much velocity from NoteOn message affects sample
+   volume. If set to 0 sample is always played with maximum (set in
+   Volume field) volume. If set to 100 the volume depends on
+   velocity. Maximum velocity means maximum possible volume, minimum
+   (0) velocity means no sound at all.
+
+ - Aftertouch - how much the Aftertouch message affects the sample
+   being played. If set to 100 it lets You control dynamically
+   volume of played sound by pressing and depressing the key. This
+   is a VERY COOL function, especially if You play some groovy loops
+   and experiment with Aftertouch - sounds like DJ tricks with mixer
+   faders. Check it out by Yourself!
+
+ - Panorama - nothing more, nothing less; -128 is maximum left, 0 is
+   center, 128 is maximum right; there is a 'Center' gadget under
+   the slider
+
+ - AutoPan - this spreads the sample in panorama. If set to maximum,
+   sample played on the upper edge of range will be moved to right
+   channel, and sample played on the lower edge of the range - to
+   the left channel. If set to 0, samples will be placed depending
+   on Panorama slider no matter where played on the keyboard.
+
+ - midi Volume - decides if the active bank's volume depends on MIDI
+   Volume Controller; if yes, then maximum MIDI volume (127) means
+   volume set by You in this window; volume = 0 means no sound
+
+ - midi Pan - decides if the actives bank's panorama depends on MIDI
+   Panorama Controller; if yes, then Pan in the middle means
+   panorama set by You in this window, maximum left means maximum
+   left, maximum right means maximum right;
+   Panorama = 63 OR 64 means the middle. 0 is maximum left, 127 is
+   maximum right
+
+ - Pitch Bender note range - another COOL FEATURE - realtime pitch
+   shift controlled by MIDI joystick; set the amount of semitones to
+   transpose (maximum is 12, what means one octave).
+   Remember, that Pitch Bend is a channel message, so it affects all
+   samples on the channel You send it on.
+
+   Due to processor power limitations this function may mute sound
+   sometimes during fast joystick movements.
+
+
+Envelope window
+^^^^^^^^^^^^^^^
+
+   This is a standard ADSR (Attack, Decay, Sustain, Release)
+envelope, like the ones You can find in most synthesisers. In case
+You don't know: Attack means how fast after pressing the key volume
+reaches maximum. Decay says how fast will the volume change from
+maximum (attack) level to Sustain level. Volume stays on the Sustain
+level until the key is released. Release is time from releasing
+the key (Note Off) to total lack of sound.
+
+   Attack, Decay and Release are measured in seconds (max 25.5 sec),
+Sustain is measured in percents (%).
+
+   Edition is very easy and intuitive. You change the parameters
+dragging the corresponding parts of the envelope with mouse.
+Movement to the right increases the parameters (A, D and R),
+movement to the left decreases them. You can set the Sustain level
+just by clicking on the desired level on the Sustain field
+(the big "X").
+  The alternative way of editing the envelope is to press and keep for a
+while LMB for decreasing or RMB for increasing specific field.
+
+Scope window
+^^^^^^^^^^^^
+
+   This is a nice scope. It shows actual waveform played by both
+audio channels. The Scope has the lowest priority in midiIn system,
+so it may freeze sometimes during heavy mixing.
+   If audio channels are not allocated, scope is empty. If channels
+are allocated, two lines representing two channels appear.
+   Try to make the Scope window full screen! (if You have enough CPU
+power...)
+
+
+Monitor window
+^^^^^^^^^^^^^^
+
+   In this window You can see the values of midi Volume and Panorama
+controllers and Pitch Bender message. You can switch between these
+three possibilities using the 'ctrl' gadget. Of course, the values
+are shown in real time.
+   The values are shown in 16 rows, for 16 midi channels.
+
+
+Advanced window
+^^^^^^^^^^^^^^^
+
+   You open this window by choosing "Advanced..." from the Settings
+menu of the midiIn Main window, or by pressing right Amiga + p keys.
+   In this window You can set the mixing frequency, the number of
+virtual audio channels (max polyphony), Amiga audio filter, MIDI
+channels and messages received by midiIn and MIDI messages source.
+
+   Advanced window is divided to two parts - upper, smaller part
+controls audio output settings, the lower, bigger part controls MIDI
+input settings. Each part has its own Undo gadget bringing back
+situation from last Save defaults function. Usually, if You don't
+save settings it brings back situation from starting midiIn, even if
+You loaded settings with project. In case You load a project with
+unwanted settings pressing these Undo buttons will bring back the
+previous situation.
+
+   More about mixing frequency and virtual channels can be found in
+the <Sample playback> chapter.
+
+   You can choose which MIDI messages and from which MIDI channels
+are received by midiIn by selecting the appropriate gadgets.
+   More about MIDI sources can be found in <MIDI implementation>
+chapter.

@@ -1,0 +1,38 @@
+!!!!!!!!!!!!!!!!
+
+                            ############
+                            Installation
+                            ############
+
+How to install midiIn:
+
+  It is very simple, you probably have already done it.
+
+  You have to unpack the archive file (what you probably did).
+  midiIn.lha archive should LINK (and must) contain:
+
+    midiIn       length - the main program
+    midiIn.info  length - its icon
+    midiIn.guide length - this documentation
+    midiIn.prefs length - a default prefs file
+    projects/    <dir>  - an empty directory to store Your projects in
+    midiIn.sig   length - md5sum of all files signed with my secret LINK PGP keyring
+     to get my public keyring LINK mail me, or you can finger the same address as well.
+    libs/reqtools.library
+    libs/midi.library
+
+  If you don't have those two libraries installed yet, copy them to your
+  LIBS: directory.
+
+  What you should know:
+
+  No assigns nor environment variables are needed for midiIn.
+  The configuration file is saved in the same directory, the main
+  program is in ('PROGDIR:midiIn.pref').
+  Configuration file contains: sound LINK preferences, default LINK paths
+  to projects and samples and default LINK sample list.
+  The program doesn't need this file to operate.
+  It requires both: reqtools.library and midi.library to be in LIBS:
+  directory.
+
+

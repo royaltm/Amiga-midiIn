@@ -1,0 +1,91 @@
+                                  #####
+                                  Menus
+                                  #####
+
+   This is a description of midiIn Main window's menu. Sample
+detail window and Envelope window have the same menu except the
+Settings entry. Scope window and Advanced settings window have no
+menu at all.
+
+
+   Project
+   ^^^^^^^
+    -> New LINK <Prepares a new projects>
+    -> Open - LINK <loads a project from disk>
+    -> AddProject - inserts an existing project starting from the active
+                    bank; useful for adding made-before drums sets etc.
+    -> ReladAll - reloads all samples used in banks. You should reaload
+                  samples if You edited them in external sample editor
+                  not quitting midiIn.
+    -> Save - saves the project with the current name
+              there is the project name displayed on the midiIn window's
+              drag bar; if it is followed by an asterisk (*) it means that
+              the project is changed and You have to save it to store the
+              changes
+    -> Save as - saves the project opening a file-requester allowing You
+                 to change the path and the name of the project
+    -> Info - displays information about number of loaded samples, memory
+              allocated by them, free memory available and how long You are
+              working with midiIn
+    -> Hide - closes all midiIn windows except the Scope and Monitor
+              windows without stopping to play; to restore the windows
+              You have to press the combination of keys defined in
+              midiIn's icon in CX_POPUP field. Default combination
+              is "control shift m". midiIn is a system commodity, so
+              You can also use the Exchange program and its "Show
+              interface" function.
+    -> About - opens the intro window with picture and introtext
+    -> Quit - quits midiIn; if the project is unsaved midiIn asks You for
+              confirmation
+
+   Edit
+   ^^^^ 
+    -> Copy - copies the current bank to buffer
+    -> Paste - pastes buffer to current bank
+    -> Delete - clears all data in current bank
+         see LINK <How to work with midiIn> for details
+
+   Settings
+   ^^^^^^^^
+    -> Audio enable - allocates and frees audio.device
+    -> Midi control - allows/permits MIDI control of midiIn
+         see LINK <How to work with midiIn> for details
+    -> Follow mode - turns on/off Follow mode, which changes the current
+                     bank to the one played recently
+    -> Advanced - opens a LINK <special window> in which You can change
+                  the midi.library and sound player parameters
+    -> Save default - saves <advanced settings>, <default paths to projects
+                      and samples>, default <Instrument List>, and
+                      depending on the Save layout flag, size and
+                      position of all midiIn windows in
+                      'PROGDIR:midiIn.pref' file, which is loaded
+                      after starting midiIn.
+
+      -> Save layout - this flag tells midiIn if size and position
+                       of windows should be saved together with
+                       settings. It should be turned off to avoid
+                       saving random moves of windows with every
+                       project. You should turn it on to set the
+                       preferred layout and save it with Save
+                       default function.
+
+      -> Load with project - if turned on, midiIn will load settings
+                       saved with every project on disk.
+
+      -> Save icons - if checked, saves icon with every project; the icon
+                      is def_midiIn_project which should be in the project,
+                      sys:env, or PROGDIR:icons directory; if there's no
+                      such icon it uses the default project icon.
+
+    *NOTE: There's no def_midiIn_project icon so far. You can design one.
+  It has to be both MagicWB and NewIcons compatible and a pretty one, of
+  course. We're waiting!!!
+  
+
+   Windows
+   ^^^^^^^
+    -> Main - activates the midiIn main window
+    -> Bank - activates, and opens if necessary the <Bank window>
+    -> Envelope - activates, and opens if necessary the <Envelope window>
+    -> Scope - activates, and opens if necessary the <Scope window>
+    -> Monitor - activates, and opens if necessary the <Monitor window>

@@ -1,0 +1,35 @@
+                                  *******
+                                  History
+                                  *******
+
+   There were lots of beta versions I got from Royal for testing and
+every next version was better. This one is the best.
+
+Revision: 32.11 BETA
+Date: Thu Jun 11 19:52:27 1998
+
+ - added workbench icon support for projects
+
+Date: Mon Jun 22 00:29:06 1998
+
+ - added support for different way of changing envelope
+ - changed "Channels:" to "Max polyphony:" in window: Advanced
+
+Revision: 32.12 BETA
+Date: Tue Jun 23 23:13:05 1998
+
+ - added monophonic function
+ - added exclusive group option
+
+Revision: 32.14 BETA
+Date: Tue Nov 16 02:00:23 1998
+
+ - rewritten edit range handler procedures in pianokeys object
+ - added better way of making one key range banks
+
+Revision: 32.14 BETA
+Date: Tue Nov 17 23:00:46 1998
+
+ - improved "add project"
+ - some reorganization in program structure
+

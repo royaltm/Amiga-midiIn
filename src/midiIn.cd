@@ -1,0 +1,263 @@
+#catalogname midiIn
+#function GetString
+#language english
+#version 1
+#lengthbytes 0
+;;
+;;
+MSG_MIDIIN (//)
+midiIn
+MSG_CX_TITLE (//)
+midiIn: 16bit unlimited sample player
+MSG_CX_DESCR (//)
+MIDI controlled, up to 32 sound chan.
+;;
+;;
+MSG_AIFFNAME (//)
+Audio IFF file
+MSG_8SVXNAME (//)
+8svx IFF file
+MSG_LOOKINGFORSAMPLE (//)
+Looking for instrument...
+MSG_LOADINGSAMPLE (//)
+Loading instrument...
+MSG_REQ_CHOOSEANOTHERSAMPLE (//)
+Choose another instrument file
+MSG_INITINSTRUMENTS (//)
+Initialising instruments...
+;;
+;;
+MSG_TITLE_MIDIINSCOPEWINDOW (//)
+midiIn Scope
+;;
+;;
+MSG_TITLE_MIDIINADVANCEDWINDOW (//)
+midiIn advanced
+MSG_GAD_DMA (//)
+d\0_DMA Freq
+MSG_GAD_CHANPOLY (//)
+c\0_Chan poly:     
+MSG_GAD_UNDO (//)
+u\0_Undo
+MSG_GAD_LEDFILTER (//)
+l\0_Led/Filter
+MSG_GAD_MIDIROUTE (//)
+Midi route
+MSG_GAD_PREV (//)
+p\0_Prev
+MSG_GAD_NEXT (//)
+n\0__Next
+;;
+;;
+MSG_GAD_EDITRANGE (//)
+e\0_Edit range:
+MSG_GAD_AUDIO (//)
+a\0_Audio:
+MSG_GAD_MIDICTRL (//)
+m\0_Midi control:
+MSG_GAD_INSTRUMENT (//)
+Instrument:
+MSG_GAD_FREE (//)
+f\0_Free
+MSG_GAD_VOLUME (//)
+v\0_Volume
+MSG_GAD_MIDICHAN (//)
+i\0M_idi chan:   
+MSG_GAD_BANKPRIORITY (//)
+Bank priority:    
+MSG_GAD_DURATION (//)
+d\0_duration
+MSG_DUR_ON_OFF (//)
+ON->OFF
+MSG_DUR_ON_ON (//)
+ON->ON
+MSG_GAD_LOOP (//)
+l\0_Loop
+MSG_GAD_SET (//)
+s\0_SET
+MSG_GAD_BASE (//)
+Base
+MSG_GAD_FINE (//)
+Fine:    
+MSG_GAD_CLEAR (//)
+Clear
+MSG_GAD_ADD (//)
+Add
+MSG_GAD_DELETE (//)
+Delete
+;;
+;;
+MSG_MENUPROJECT (//)
+Project
+MSG_ITEMMENUNEW (//)
+N\0New
+MSG_ITEMMENUOPEN (//)
+O\0Open
+MSG_ITEMMENUSAVE (//)
+W\0Save
+MSG_ITEMMENUSAVEAS (//)
+Save as
+MSG_ITEMMENUHIDE (//)
+H\0Hide
+MSG_ITEMMENUABOUT (//)
+?\0About
+MSG_ITEMMENUQUIT (//)
+Q\0Quit
+MSG_MENUEDIT (//)
+Edit
+MSG_ITEMMENUCOPY (//)
+C\0Copy
+MSG_ITEMMENUPASTE (//)
+V\0Paste
+MSG_ITEMMENUDELETE (//)
+X\0Delete
+MSG_MENUSETTINGS (//)
+Settings
+MSG_ITEMMENUAUDIOENABLE (//)
+A\0Audio enable
+MSG_ITEMMENUMIDICTRL (//)
+M\0MIDI control
+MSG_ITEMMENUADVANCED (//)
+P\0Advanced...
+MSG_ITEMMENUSAVESETTINGS (//)
+Save settings
+MSG_MENUWINDOWS (//)
+Windows
+MSG_ITEMMENUVOLUME (//)
+Volume
+MSG_ITEMMENUSCOPE (//)
+S\0Scope
+;;
+;;
+MSG_REQ_ADDINSTRUMENTS (//)
+Add instruments
+MSG_ADDINGINSTRUMENTS (//)
+Adding instruments...
+;;
+;;
+MSG_INSTRUMENTLIST (//)
+Instruments:
+MSG_DELETELIST (//)
+Delete:
+;;
+;;
+MSG_SECONDS (//)
+seconds
+MSG_TITLE_VOLUMECTRLWINDOW (//)
+midiIn volume control
+MSG_GAD_VOLUMESET (//)
+v\0_Volume:     
+MSG_GAD_100PERCENT (//)
+100%
+MSG_GAD_VELOCITY (//)
+l\0Ve_locity:     
+MSG_GAD_PANORAMA (//)
+p\0_Panorama:      
+MSG_GAD_WIDE (//)
+w\0_Wide:     
+MSG_GAD_CENTER (//)
+c\0_Center
+MSG_GAD_SUSTAIN (//)
+s\0_Sustain:
+MSG_PITCHBENDER (//)
+Pitch Bender
+MSG_GAD_NOTERANGE (//)
+r\0note _range:      
+;;
+;;
+MSG_UNNAMED (//)
+<Unnamed>
+;;
+;;
+MSG_REQ_SAVEPROJECTAS (//)
+Save project as
+MSG_REQ_CHOOSEPROJECT (//)
+Choose project to Open
+;;
+MSG_TITLE_BARPROJECT (//)
+Project:
+;;
+;;
+MSG_REPORT_AREUSURE (//)
+Are U sure you want to\nclear sample list?
+MSG_RESPOND_UNUSED (//)
+Unused
+MSG_RESPOND_ALL (//)
+All
+MSG_RESPOND_CANCEL (//)
+Cancel
+MSG_TITLE_REQUEST (//)
+request
+;;
+MSG_REPORT_UNSAVED (//)
+Current project is unsaved!\nAre U sure you want to loose it?
+MSG_RESPOND_LOOSE (//)
+Loose
+MSG_RESPOND_BACK (//)
+Back
+MSG_TITLE_QUESTION (//)
+question
+;;
+MSG_REPORT_INSTRNOTFOUND (//)
+Instrument not found:
+MSG_RESPOND_REPLACE (//)
+Replace
+MSG_RESPOND_ABORT (//)
+Abort
+MSG_RESPOND_SKIP (//)
+Skip
+MSG_TITLE_TROUBLE (//)
+trouble
+;;
+MSG_ERR_ORUNKNOWN (//)
+Unknown
+MSG_ERR_WRONGFILENAME (//)
+Wrong file name\n or \nfile not found!
+MSG_ERR_NOTINTERCHANGEFF (//)
+Not an Interchange File Format!\n(no "FORM" chunk)
+MSG_ERR_IFFMANGLED (//)
+Iffparse error or IFF file mangled!
+MSG_ERR_WRITE (//)
+Error while writing to file!\n(BAD disk?)
+MSG_ERR_POPKEY (//)
+Wrong CX_POPKEY argument!\n"%s"
+MSG_ERR_BADPROJECT (//)
+Bad project data!
+MSG_ERR_AUDIO (//)
+Audio busy!\nCheck other programs that are\nusing audio device!
+MSG_ERR_COMMON_CHUNK (//)
+The file contains no common chunk!\n(is not an Audio IFF)
+MSG_ERR_AHDR_CHUNK (//)
+The file contains no audio header!\n(is not an IFF 8SVX)
+MSG_ERR_UNKNOWNSOUNDTYPE (//)
+Unknown sound file type!
+MSG_ERR_READ (//)
+Trouble while reading file!\n(BAD disk or file?)
+MSG_ERR_SSND_CHUNK (//)
+Sample data not found!\n(no "SSND" chunk)
+MSG_ERR_BODY_CHUNK (//)
+Sample data not found!\n(no "BODY" chunk)
+MSG_ERR_MEMORY (//)
+Not enough memory!\n(or mem is fragmented)
+MSG_ERR_LIBMATHIEEEDOUBBAS (//)
+No 'mathieeedoubbas.library'!\n(check your LIBS: directory!)
+MSG_ERR_LIBRARY (//)
+Required library: '%s' is missing!
+MSG_ERR_MIDISOURCE (//)
+Midi source: '%s' not found!
+MSG_ERR_GADTOOLS (//)
+Couldn't open 'gadtools.library'!
+MSG_ERR_WINDOWTOOBIG (//)
+Window doesn't fit on current PubScreen!\n(Change to bigger screen size)
+MSG_ERR_GADMEMORY (//)
+No memory for gadgets or window!
+MSG_ERR_PREFSFILE (//)
+Preferences file corrupted!
+MSG_ERR_LIBIFFPARSE (//)
+Could not open 'iffparse.library'!
+MSG_ERR_USERBREAK (//)
+User BREAK "^ C" 
+MSG_RESPOND_NOWAY (//)
+No way!
+MSG_TITLE_ERROR (//)
+ERROR!

@@ -1,0 +1,72 @@
+                       #####################
+                       Dealing with projects
+                       #####################
+
+   To begin a new project just double click on midiIn icon ;)
+   After loading the program is ready to work. You may be surprised
+that Instrument List may contain some samples - don't worry,
+everything is OK, You must have saved settings with these samples in
+the List. They are now default. You can always clear the list and
+save settings again.
+   To clear the current project and start the new one choose the New
+entry from Project menu. It will free all samples from memory and
+reset all banks' settings. If the current project is unsaved (it
+should have an asterisk (*) by it's name on midiIn window's drag
+bar) midiIn will ask if You really want to loose it.
+   
+   Projects are saved by default in the PROGDIR:projects/ directory
+(PROGDIR: in AmigaOS means the directory from which You start the
+program - in this case midiIn). You can change this by saving a
+project in a different place and saving settings. The new path will
+be saved then.
+
+   Projects do not contain the sound data (samples). They just
+contain the sample path and filename, so they are quite short files.
+
+   To load a project from disk select Open. A standard file
+requester will appear.
+   When You choose the project file, midiIn will load it and then
+try to load all samples assigned to banks. The name and type of
+currently loaded sample is shown in a small window. If the
+sample cannot be found, a requester appears asking if You want
+to replace this sample with another one (choose which one...), abort
+loading, or skip to the next sample.
+   You can also load a project by dragging it's icon to midiIn
+Main Window.
+
+* NOTE:  When changing the sample path in file requester window, the next
+sample will be loaded from the directory you have chosen. So the best
+thing is to keep all samples assigned to one project in the same
+directory.  It is only important for people who often move files from
+one directory to another.
+
+  You can add an existing project to the current one. For example You may
+have a nice drumset spread over the keyboard and saved as "drums" project.
+Now while working on a project You want to use this drums. You have to
+choose as current bank an empty one and select AddProject from Project
+menu. After selecting the desired project midiIn will load it to banks
+starting from the current one. In case of overlapping the new banks with
+old ones, midiIn will ask if You want to overlap banks, skip used banks -
+fill only empty ones, or abort loading.
+
+[
+* NOTE: This version of midiIn doesn't check if the added project's banks
+don't overlap (ranges and MIDI channels) with existing ones, so be careful.
+It may also override (clear) existing banks. We're working on it.
+]
+
+   To save a project to disk choose Save from the Project menu. If
+Your project is new ("untitled"), a filerequester will appear asking
+You for project's path and filename.
+
+   Every project saved to disk contains all settings of midiIn:
+sample playback parameters, MIDI configuration, audio filter, and
+depending on the <Save layout> flag in the <Settings> menu, size and
+position of midiIn windows.
+   If the <Load with project> flag in the Settings menu is set, this
+settings are loaded with project.  Sometimes it is good to have
+different settings for different projects (for example audio
+filter), sometimes only the default settings are used.  You always
+have to remember about this flag to avoid problems.
+
+

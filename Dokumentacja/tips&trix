@@ -1,0 +1,50 @@
+                            ###########
+                            Tips & Trix
+                            ###########
+
+
+   Here are some ideas about using midiIn without frustration that
+it doesn't work correctly or it is acting strange. Most of it should
+be written in other chapters, but this is a kind of summary. I also
+remind You here about a few handy features.
+
+   - it is important which of midiIn windows is active if You use
+     keyboard shortcuts; moreover, be carefull because some
+     shortcuts mean different things for different windows (for
+     example 'm' turns on/off MIDI control in Main window and sets
+     maximum possible volume in bank window); more about windows
+     managment can be found in the <Windows chapter>
+
+   - if the 'Load with project' flag in Settings menu is set You can
+     unconciously change fundamental parameters of midiIn, just by
+     loading an old project with strange settings, like for example
+     turned off NoteOn message; You can always open the Advanced
+     window and Undo the settings; anyway it is safer to have this
+     flag unset and use it only if really necessary
+
+   - if the midi Volume gadget in Bank window is set it may happen,
+     that a sequencer sends Volume Controller = 0; the sample is
+     then played with 0 volume (no sound), even if midiIn volume
+     is normal; the value of Volume Controller for every channel is
+     shown in the Monitor window
+
+   - when You load a new sample to the bank, first select it's base
+     note, then the range, because if You make it opposite You move
+     the range by interval between the new and old (default) base
+     note; by the way, I remind You that this is very convinient
+     methode of moving the range together with the base note
+
+   - use the Offset slider! sometimes cutting off first few
+     miliseconds of sound (base drum, for example) makes it have a
+     better attack; You can also achieve different effects, like
+     starting a drum loop from the snare
+
+   - if You don't like the default bank settings (Velocity,
+     Aftertouch, midi Volume and midi Pan set to 0), make Your own
+     'empty' project using copy & paste and load it before You build
+     a new one
+
+   - if You want a specific looped sample to play in background and play
+     other short samples, set the looped sample's priority to higher, than
+     other samples' priority; it is impossible then that one of short
+     samples mutes the loop when running out of audio channels
