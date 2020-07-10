@@ -1,0 +1,8 @@
+.autoload
+.logout
+/export
+/pics
+*.m
+!title.m
+*.pp
+*.pref
