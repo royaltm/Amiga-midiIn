@@ -79,7 +79,7 @@ Compilation
 
 I'm writing this from memory, requires verification:
 
-* Compile [modules/softmix.s](modules/softmix.s) to `modules/softmix.o`
+* Compile [modules/softmix.s](src/modules/softmix.s) to `modules/softmix.o`
 * Run `Amiga Shell` script: [make](src/make)
 
 This should produce `midiIn` executable in `src`.
