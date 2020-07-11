@@ -1,7 +1,7 @@
 midiIn
 ======
 
-Hereby I humbly present sources of the [MIDI-controlled sample player] for AMIGA under the [GPL-3.0-or-later](COPYING) license. It's Open Source now.
+This is the source repository of the [MIDI-controlled sample player] for AMIGA under the [GPL-3.0-or-later](COPYING) license. It is Open Source now.
 
 History
 -------
@@ -42,7 +42,7 @@ Versions
 
 Tagged as [32.020] is a [never before](Dokumentacja/News) released version of `midiIn`, with awesome "new" features, and with its sound mixing routines targeting the [AHI] subsystem instead of native Paula chipset. This one was not as thoroughly tested as the previous versions, but here it is.
 
-I've also added sources of a pre-release version, tagged [32.014] which includes the original Paula-only mixing routines. Just do `git checkout 32.014`. Unfortunately, I didn't preserve sources for the released `midiIn` v32.15b but 014 is the closest I could find. Back in the days, GIT wasn't a thing yet and as a self-taught programmer without the Internet, version control systems were not commonly used as they are today. I don't even know if there was such a solution for AMIGA anyway. So I've developed my system, which was archieving source files between releases, but only a few of those archived files survived all of the hard disc crashes that happened in the meantime.
+I've also added sources of a pre-release version, tagged [32.014] which includes the original Paula-only mixing routines. Just do `git checkout 32.014`. Unfortunately, I didn't preserve sources for the released `midiIn` v32.15b but 014 is the closest I could find. Back in the days, GIT wasn't a thing yet and as a self-taught programmer without the Internet, version control systems were not commonly used as they are today. I don't even know if there was such a solution for AMIGA anyway. So I've developed my system, which was archiving source files between releases, but only a few of those archived files survived all of the hard disc crashes that happened in the meantime.
 
 
 Prerequisites
