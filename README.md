@@ -3,6 +3,10 @@ midiIn
 
 This is the source repository of the [MIDI-controlled sample player] for AMIGA under the [GPL-3.0-or-later](COPYING) license. It is Open Source now.
 
+![midiIn32.010b Main](pics/QuickGrab.003.png)
+![midiIn32.010b Project](pics/QuickGrab.002.png)
+![midiIn32.010b Settings](pics/QuickGrab.001.png)
+
 History
 -------
 
