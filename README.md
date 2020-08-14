@@ -53,9 +53,9 @@ Prerequisites
 -------------
 
 * The AMIGA (or an emulator).
-* [AmigaE] compilator with all the modules, including EasyGUI.
+* [AmigaE] compilator with all the modules, including EasyGUI, AHI, ARQ, IFFParser and midibase.
 * [EasyGUI] v3+ (not sure if the whole installation is needed).
-* An MC68k assembler to compile modules/softmix.s
+* An MC68k assembler to compile modules/softmix.s, try [Barfly].
 * Assuming your `AmigaE` installation resides in `Prog:E_v3.2a`, add to the `user-startup` the following:
 
 ```
@@ -77,6 +77,9 @@ and last but not least: a working [AHI] sound driver.
 
 System `mathieeedoubbas.library` is also being extensively used. For an optimal experience speed it up with [FastIEEE].
 
+When using the 3.3+ version of [EasyGUI], some constants might need to be removed or refactored, mainly because it  dropped the `EG_WIDTH/EG_HEIGHT` concept to replace it with `EG_MAXH/EG_MAXW` booleans.
+
+If still in trouble, see the [Modules](Modules/) directory.
 
 Compilation
 -----------
@@ -103,5 +106,6 @@ These sources are old, and not maintained since the last century (hehe). They ar
 [EasyGUI]: https://aminet.net/package/dev/e/EasyGUI_v33b3
 [AHI]: https://aminet.net/search?query=AHI
 [FastIEEE]: https://aminet.net/package/util/sys/FastIEEE
+[Barfly]: http://aminet.net/package/dev/asm/BarflyDisk2_00
 [32.014]: https://github.com/royaltm/Amiga-midiIn/tree/32.014
 [32.020]: https://github.com/royaltm/Amiga-midiIn/tree/32.020
