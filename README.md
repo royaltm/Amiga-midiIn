@@ -38,7 +38,7 @@ Copying
     You should have received a copy of the GNU General Public License
     along with midiIn.  If not, see <https://www.gnu.org/licenses/>.
 
-The above copyright notice applies to all of the files in this [repository](https://github.com/royaltm/Amiga-midiIn).
+The above copyright notice applies to all of the files in this [repository](https://github.com/royaltm/Amiga-midiIn) except the files in the [Modules](Modules/) directory.
 
 
 Versions
