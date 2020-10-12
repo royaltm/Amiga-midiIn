@@ -70,8 +70,9 @@ Path E:bin/ ADD
 Compilation
 -----------
 
+* `cd src`.
 * Build `modules/softmix.o` from [modules/softmix.s](src/modules/softmix.s), using an MC68020+ assembler.
-* Run `Amiga Shell` script: [make](src/make)
+* Run `Amiga Shell` script: [make](src/make).
 
 This should produce `midiIn` executable in `src`.
 
