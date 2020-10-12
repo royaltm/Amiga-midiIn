@@ -409,7 +409,7 @@ cvolume:   ;<D0=volume(65536=100%), D1=panorama(0:65536) >D1,D2 l,r(256=100%)
 ;                        divide xxxx/yyyy=aaaa.bbbb
 ;#############################################################################33
 divr:   MOVEQ   #32,D3      ;D5.D6=D0/D1
-        BFFFO   D0{0:0},D4
+        BFFFO   D0{0:32},D4
         SUB.W   D4,D3
         LSL.L   D4,D0
         DIVUL.L D1,D2:D0
@@ -419,7 +419,7 @@ divr:   MOVEQ   #32,D3      ;D5.D6=D0/D1
         MOVE.L  D2,D0
         TST.W   D3
         BLE.S   dkoniec
-dloop:  BFFFO   D0{0:0},D4
+dloop:  BFFFO   D0{0:32},D4
         SUB.W   D4,D3
         BPL.S   dok
         ADD.W   D3,D4
@@ -448,7 +448,7 @@ zerolp: CLR.L   (A0)+
         RTS
 something:
         MOVEQ   #0,D1
-        BFFFO   D0{0:0},D1
+        BFFFO   D0{0:32},D1
         MOVE.L  D0,A4
         MOVEQ   #CH_SIZEOF,D0
         MULU    D1,D0
